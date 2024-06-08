@@ -188,8 +188,6 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
             logging.debug(traceback.format_exc())
             raise
 
-import re
-
 @traceable
 def format_output(output):
     formatted_output = ""
@@ -226,29 +224,30 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
     def add_markdown_text(pdf, text):
         lines = text.split('\n')
         for line in lines:
+            # Handle headers
             if line.startswith('###'):
                 pdf.set_font(font_name, style='B', size=16)
-                pdf.multi_cell(0, 6, line[3:].strip())  # Further reduced line height
+                pdf.multi_cell(0, 5, line[3:].strip())  # Reduced line height
             elif line.startswith('##'):
                 pdf.set_font(font_name, style='B', size=14)
-                pdf.multi_cell(0, 6, line[2:].strip())  # Further reduced line height
+                pdf.multi_cell(0, 5, line[2:].strip())  # Reduced line height
             elif line.startswith('#'):
                 pdf.set_font(font_name, style='B', size=18)
-                pdf.multi_cell(0, 6, line[1:].strip())  # Further reduced line height
+                pdf.multi_cell(0, 5, line[1:].strip())  # Reduced line height
             else:
                 # Replace **bold** with FPDF's bold formatting
                 while '**' in line:
                     start = line.find('**')
                     end = line.find('**', start + 2)
                     if end != -1:
-                        pdf.multi_cell(0, 6, line[:start].strip())  # Further reduced line height
+                        pdf.multi_cell(0, 5, line[:start].strip(), align='J')  # Reduced line height
                         pdf.set_font(font_name, style='B', size=12)
-                        pdf.multi_cell(0, 6, line[start + 2:end].strip())  # Further reduced line height
+                        pdf.multi_cell(0, 5, line[start + 2:end].strip(), align='J')  # Reduced line height
                         pdf.set_font(font_name, size=12)
                         line = line[end + 2:]
                     else:
                         break
-                pdf.multi_cell(0, 6, line.strip())  # Further reduced line height
+                pdf.multi_cell(0, 5, line.strip(), align='J')  # Reduced line height
 
     # Add ICP Output
     pdf.add_page()
@@ -264,6 +263,8 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
     pdf.output(output_filename)
     logging.info(f"PDF generated: {output_filename}")
     return output_filename
+
+# Other functions remain unchanged
 
 @traceable
 def send_email_with_pdf(receiver_email, pdf_filename):
@@ -331,5 +332,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 

@@ -40,8 +40,8 @@ AIRTABLE_BASE_ID = 'appPcWNUeei7MNMCj'
 AIRTABLE_TABLE_NAME = 'tblaMtAcnVa4nwnby'
 AIRTABLE_FIELDS = {
     'email': 'fldsx1iIk4FiRaLi8',
-    'icp': 'fldL1kkrGflCtOxwa',
-    'credits': 'fldxwzSmMmldMGlgI'
+    'credits': 'fldxwzSmMmldMGlgI',
+    'icp': 'fldL1kkrGflCtOxwa'
 }
 
 # Save the original print function
@@ -101,19 +101,33 @@ async def check_credits(email):
     params = {
         "filterByFormula": f"{{{AIRTABLE_FIELDS['email']}}}='{email}'"
     }
+
     async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers, params=params)
-        response.raise_for_status()
-        records = response.json().get('records', [])
-        if records:
-            fields = records[0].get('fields', {})
-            credits = fields.get(AIRTABLE_FIELDS['credits'], 0)
-            record_id = records[0]['id']
-            logging.info(f"Email {email} found. Credits: {credits}")
-            return credits, record_id
-        else:
-            logging.info(f"Email {email} not found.")
-        return 0, None
+        try:
+            logging.info(f"Sending GET request to {url} with params {params}")
+            response = await client.get(url, headers=headers, params=params)
+            logging.info(f"HTTP Request: GET {response.url} {response.status_code} {response.reason_phrase}")
+            response.raise_for_status()
+            logging.debug(f"Response JSON: {response.json()}")
+            records = response.json().get('records', [])
+            if records:
+                fields = records[0].get('fields', {})
+                logging.debug(f"Fields returned for the record: {fields}")
+                credits = fields.get('Credits', 0)
+                if credits is not None:
+                    credits = int(credits)  # Ensure credits is treated as an integer
+                else:
+                    credits = 0
+                record_id = records[0]['id']
+                logging.info(f"Email {email} found. Credits: {credits}")
+                return credits, record_id
+            else:
+                logging.info(f"Email {email} not found.")
+            return 0, None
+        except httpx.HTTPStatusError as e:
+            logging.error(f"HTTP error occurred: {e.response.status_code} - {e.response.text}")
+        except Exception as e:
+            logging.error(f"An error occurred: {str(e)}")
 
 @traceable
 async def update_credits(record_id, new_credits):

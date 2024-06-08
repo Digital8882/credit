@@ -93,22 +93,28 @@ async def retrieve_from_airtable(record_id):
 
 @traceable
 async def check_credits(email):
-    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}?filterByFormula={{Email}}='{email}'"
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}"
     }
+    # Using filterByFormula to find the record with the given email
+    params = {
+        "filterByFormula": f"{{{AIRTABLE_FIELDS['email']}}}='{email}'"
+    }
     async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers)
+        response = await client.get(url, headers=headers, params=params)
         response.raise_for_status()
         records = response.json().get('records', [])
         if records:
             fields = records[0].get('fields', {})
             credits = fields.get(AIRTABLE_FIELDS['credits'], 0)
             record_id = records[0]['id']
-            logging.info(f"Credits for {email}: {credits}")
+            logging.info(f"Email {email} found. Credits: {credits}")
             return credits, record_id
-        logging.info(f"No records found for {email}")
+        else:
+            logging.info(f"Email {email} not found.")
         return 0, None
+
 
 @traceable
 async def update_credits(record_id, new_credits):

@@ -1,5 +1,4 @@
 import streamlit as st
-from SL_agents import researcher
 from SL_tasks import icp_task
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
@@ -8,6 +7,11 @@ from fpdf import FPDF
 import os
 import smtplib
 import logging
+from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 import time
 import traceback
 import builtins
@@ -25,7 +29,7 @@ SENDER_EMAIL = 'info@swiftlaunch.biz'
 SENDER_PASSWORD = 'Lovelife1#'
 
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "SL0llsssu1p0o"
+os.environ["LANGSMITH_PROJECT"] = "SL0llu1p0o"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -53,46 +57,6 @@ def patched_print(*args, **kwargs):
 builtins.print = patched_print
 
 @traceable
-async def check_credits(email):
-    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
-    headers = {
-        "Authorization": f"Bearer {AIRTABLE_API_KEY}"
-    }
-    params = {
-        "filterByFormula": f"{{Email}}='{email}'"
-    }
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers, params=params)
-        response.raise_for_status()
-        records = response.json().get('records', [])
-        if records:
-            fields = records[0]['fields']
-            credits = fields.get(AIRTABLE_FIELDS['credits'], 0)
-            record_id = records[0]['id']
-            return credits, record_id
-        else:
-            return 0, None
-
-@traceable
-async def update_credits(record_id, new_credits):
-    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}/{record_id}"
-    headers = {
-        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "fields": {
-            AIRTABLE_FIELDS['credits']: new_credits
-        }
-    }
-    async with httpx.AsyncClient() as client:
-        response = await client.patch(url, headers=headers, json=data)
-        response.raise_for_status()
-        record = response.json()
-        logging.info(f"Airtable response: {record}")
-        return record['id']
-
-@traceable
 async def send_to_airtable(email, icp_output):
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
     headers = {
@@ -102,7 +66,7 @@ async def send_to_airtable(email, icp_output):
     data = {
         "fields": {
             "Email": email,
-            AIRTABLE_FIELDS['icp']: icp_output,
+            AIRTABLE_FIELDS['icp']: icp_output
         }
     }
     async with httpx.AsyncClient() as client:
@@ -127,6 +91,40 @@ async def retrieve_from_airtable(record_id):
         return fields.get(AIRTABLE_FIELDS['icp'], '')
 
 @traceable
+async def check_credits(email):
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}?filterByFormula={{Email}}='{email}'"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}"
+    }
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+        response.raise_for_status()
+        records = response.json().get('records', [])
+        if records:
+            fields = records[0].get('fields', {})
+            return fields.get(AIRTABLE_FIELDS['credits'], 0), records[0]['id']
+        return 0, None
+
+@traceable
+async def update_credits(record_id, new_credits):
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}/{record_id}"
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "fields": {
+            AIRTABLE_FIELDS['credits']: new_credits
+        }
+    }
+    async with httpx.AsyncClient() as client:
+        response = await client.patch(url, headers=headers, json=data)
+        response.raise_for_status()
+        record = response.json()
+        logging.info(f"Airtable update response: {record}")
+        return record['id']
+
+@traceable
 async def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, retries=3):
     task_description = f"New task from {email} selling {product_service} at {price} {currency} with payment frequency {payment_frequency}."
     if selling_scope == "Locally":
@@ -136,7 +134,7 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
 
     project_crew = Crew(
         tasks=[new_task, icp_task],
-        agents=[researcher],
+        agents=[researcher],  # Removed report_writer
         manager_llm=ChatOpenAI(temperature=0, model="gpt-4o"),
         max_rpm=5,
         process=Process.hierarchical,
@@ -147,7 +145,6 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
         try:
             logging.info(f"Starting crew process, attempt {attempt + 1}")
             results = project_crew.kickoff()
-            # Access task outputs directly
             icp_output = icp_task.output.exported_output if hasattr(icp_task.output, 'exported_output') else "No ICP output"
             logging.info("Crew process completed successfully")
             return icp_output
@@ -227,175 +224,79 @@ def generate_pdf(icp_output, font_name="Courier", custom_font=False):
 
     # Add ICP output
     pdf.multi_cell(0, 10, "ICP Output:")
-    pdf.set_font(font_name, style='')
     add_markdown_text(pdf, icp_output)
 
-    pdf.output("icp_report.pdf")
-    logging.info("PDF generated successfully")
+    # Create output directory if it doesn't exist
+    output_directory = "output"
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
 
-def send_email(recipient_email, icp_output, retries=3):
-    message = f"""Subject: Your ICP Report
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    pdf_filename = f"{output_directory}/icp_report_{timestamp}.pdf"
+    pdf.output(pdf_filename)
 
-    Dear Customer,
+    logging.info(f"PDF generated and saved as {pdf_filename}")
+    return pdf_filename
 
-    Please find attached your ICP report generated based on the information provided.
-
-    Best regards,
-    Swift Launch Team
-    """
-
+@traceable
+def send_email_with_pdf(recipient_email, pdf_filename, sender_email=SENDER_EMAIL, sender_password=SENDER_PASSWORD):
     try:
-        generate_pdf(icp_output)  # Generate the PDF before sending
+        logging.info(f"Preparing to send email to {recipient_email}")
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = 'ICP Report'
 
-        for attempt in range(retries):
-            try:
-                with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                    server.starttls()
-                    server.login(SENDER_EMAIL, SENDER_PASSWORD)
-                    msg = MIMEMultipart()
-                    msg['From'] = SENDER_EMAIL
-                    msg['To'] = recipient_email
-                    msg['Subject'] = "Your ICP Report"
-                    msg.attach(MIMEText(message, 'plain'))
+        body = 'Please find attached the ICP Report.'
+        msg.attach(MIMEText(body, 'plain'))
 
-                    with open("icp_report.pdf", "rb") as attachment:
-                        part = MIMEBase('application', 'octet-stream')
-                        part.set_payload(attachment.read())
-                        encoders.encode_base64(part)
-                        part.add_header('Content-Disposition', f"attachment; filename= icp_report.pdf")
-                        msg.attach(part)
+        with open(pdf_filename, "rb") as attachment:
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload(attachment.read())
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', f"attachment; filename= {os.path.basename(pdf_filename)}")
+            msg.attach(part)
 
-                    text = msg.as_string()
-                    server.sendmail(SENDER_EMAIL, recipient_email, text)
-                logging.info("Email sent successfully")
-                return True
-            except Exception as e:
-                logging.error(f"Failed to send email on attempt {attempt + 1}: {e}")
-                logging.debug(traceback.format_exc())
-                if attempt < retries - 1:
-                    time.sleep(2 ** attempt)  # Exponential backoff
-        return False
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            text = msg.as_string()
+            server.sendmail(sender_email, recipient_email, text)
+
+        logging.info(f"Email sent to {recipient_email}")
     except Exception as e:
-        logging.error(f"Failed to generate PDF or send email: {e}")
+        logging.error(f"Failed to send email to {recipient_email}: {e}")
         logging.debug(traceback.format_exc())
-        return False
+        raise
 
 def main():
-    # Inject custom CSS for dynamic iframe height adjustment and hiding Streamlit branding
-    st.markdown(
-        """
-        <style>
-        @import url('style.css');
-        .stApp {
-            background-color: #000000;
-        }
-        .title {
-            color: #DE6A1D;
-            font-size: 3em;
-        }
-        .subtitle {
-            color: #DE6A1D;
-            font-size: 1.2em;
-        }
-        input {
-            background-color: #1A1A1A !important;
-            color: #FFFFFF !important;
-        }
-        textarea {
-            background-color: #1A1A1A !important;
-            color: #FFFFFF !important;
-        }
-        select {
-            background-color: #1A1A1A !important;
-            color: #FFFFFF !important;
-        }
-        footer {visibility: hidden;}
-        .css-1v0mbdj {padding-top: 0 !important;}
-        .block-container {padding-top: 20px !important;}
-        .stApp a:first-child {display: none;}
-        .css-15zrgzn {display: none;}
-        .css-eczf16 {display: none;}
-        .css-jn99sy {display: none;}
-        div[data-testid="stToolbar"] { display: none; }
-        </style>
-        <script>
-        function sendHeight() {
-            const height = document.documentElement.scrollHeight;
-            window.parent.postMessage({ height: height }, '*');
-        }
+    st.title("ICP Report Generator")
 
-        window.addEventListener('load', sendHeight);
-        window.addEventListener('resize', sendHeight);
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
+    email = st.text_input("Enter your email")
+    product_service = st.text_input("Enter the product/service you are selling")
+    price = st.text_input("Enter the price")
+    currency = st.text_input("Enter the currency")
+    payment_frequency = st.selectbox("Select the payment frequency", ["One-time", "Monthly", "Annually"])
+    selling_scope = st.selectbox("Select the selling scope", ["Locally", "Globally"])
+    location = st.text_input("Enter the location (if selling locally)")
 
-    st.markdown('<h1 class="title">Swift Launch Report</h1>', unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
-    first_name = col1.text_input("First Name")
-    email = col2.text_input("Email")
-
-    if len(email) > 0 and "@" not in email:
-        st.error("Please enter a valid email address")
-
-    product_service = st.text_input("Product/Service being sold")
-    
-    col3, col4 = st.columns(2)
-    price = col3.text_input("Price")
-    currency = col4.selectbox("Currency", ["USD", "EUR", "GBP", "JPY", "AUD"])
-    
-    col5, col6 = st.columns(2)
-    payment_frequency = col5.selectbox("Payment Frequency", ["One-time", "Monthly", "Yearly"])
-    selling_scope = col6.selectbox("Are you selling Locally or Globally?", ["Locally", "Globally"])
-
-    location = ""
-    if selling_scope == "Locally":
-        location = st.text_input("Location")
-
-    if st.button("Submit"):
-        if email and product_service and price:
-            try:
-                with st.spinner("Generating customer profile..."):
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
-                    credits, record_id = loop.run_until_complete(check_credits(email))
-                    if credits > 0:
-                        icp_output = loop.run_until_complete(
-                            start_crew_process(
-                                email, product_service, price, currency, payment_frequency, selling_scope, location
-                            )
-                        )
-
-                        airtable_record_id = loop.run_until_complete(
-                            send_to_airtable(email, icp_output)
-                        )
-                        
-                        if airtable_record_id:
-                            st.success("Data successfully sent to Airtable!")
-                            email_sent = send_email(email, icp_output)
-                            if email_sent:
-                                st.success("Email sent successfully!")
-                                new_credits = credits - 1
-                                loop.run_until_complete(update_credits(record_id, new_credits))
-                            else:
-                                st.error("Failed to send email after multiple attempts.")
-                        else:
-                            st.error("Failed to send data to Airtable.")
-                    else:
-                        st.error("Insufficient credits. Please purchase a report from swiftlaunch.biz.")
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
-                st.error(traceback.format_exc())
-                logging.error(f"An error occurred: {e}")
-                logging.debug(traceback.format_exc())
-        else:
-            st.error("Please fill in all the required fields.")
+    if st.button("Generate ICP Report"):
+        try:
+            st.info("Checking credits...")
+            credits, record_id = asyncio.run(check_credits(email))
+            if credits > 0:
+                st.info("Generating ICP Report...")
+                icp_output = asyncio.run(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location))
+                pdf_filename = generate_pdf(icp_output)
+                send_email_with_pdf(email, pdf_filename)
+                asyncio.run(update_credits(record_id, credits - 1))
+                st.success("ICP Report generated and sent successfully.")
+            else:
+                st.error("Insufficient credits. Please purchase more credits at swiftlaunch.biz")
+        except Exception as e:
+            logging.error(f"Failed to generate ICP Report: {e}")
+            logging.debug(traceback.format_exc())
+            st.error(f"Failed to generate ICP Report: {e}")
 
 if __name__ == "__main__":
     main()
-
-# Restore the original print function after execution
-builtins.print = original_print

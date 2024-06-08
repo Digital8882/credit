@@ -214,8 +214,8 @@ def generate_pdf(icp_output, font_name="Arial", custom_font=True):
 
     if custom_font:
         # Add regular and bold variants of the custom font
-        pdf.add_font(font_name, style="", fname="fonts/arial.ttf")
-        pdf.add_font(font_name, style="B", fname="fonts/arialbd.ttf")
+        pdf.add_font(family=font_name, style="", fname="fonts/arial.ttf", uni=True)
+        pdf.add_font(family=font_name, style="B", fname="fonts/arialbd.ttf", uni=True)
 
     pdf.set_font(font_name, size=12)  # Use the specified font
 

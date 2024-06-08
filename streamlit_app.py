@@ -229,9 +229,7 @@ def generate_pdf(icp_output, font_name="Arial", custom_font=True):
                 pdf.multi_cell(0, 10, line[3:].strip())
             elif line.startswith('##'):
                 pdf.set_font(font_name, style='B', size=14)
-                pdf.multi_cell(0, 10, line[2:].stripHere's the continuation and completion of the updated Streamlit script:
-
-```python
+                pdf.multi_cell(0, 10, line[2:].strip())
             elif line.startswith('#'):
                 pdf.set_font(font_name, style='B', size=18)
                 pdf.multi_cell(0, 10, line[1:].strip())
@@ -245,6 +243,7 @@ def generate_pdf(icp_output, font_name="Arial", custom_font=True):
     pdf.output(output_filename)
     logging.info(f"PDF generated: {output_filename}")
     return output_filename
+
 
 @traceable
 def send_email_with_pdf(receiver_email, pdf_filename):

@@ -25,12 +25,3 @@ researcher = Agent(
     llm=ChatOpenAI(temperature=0.2, model="gpt-3.5-turbo", max_tokens=4096),
 )
 
-report_writer = Agent(
-    role="Report Writer",
-    goal=" Capture customer insights, analyze data, and create comprehensive reports that inform decision-making and drive business growth.",
-    backstory=" As a skilled report writer, you meticulously gather and synthesize customer insights, transforming raw data into actionable recommendations. Your reports provide valuable guidance for strategic planning and help the team make informed choices. Your attention to detail and clear communication style contribute to the success of our initiatives. Include headings, subheadings, bullet points, and numbered lists to organize the report in a structured and easy-to-read format. Use a professional, analytical tone throughout the report, ensuring clarity and accessibility necessary for understanding by team members across different functions. ensure when things look are in a readable format and things that should be on the same line are so. Bolden headings and sub headings",
-    verbose=True,
-    allow_delegation=True,
-    max_rpm=4,
-    llm=ChatOpenAI(temperature=0.2, model="gpt-3.5-turbo", max_tokens=4096),
-)

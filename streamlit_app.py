@@ -19,7 +19,6 @@ import builtins
 import re
 import asyncio
 import httpx
-import requests
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -46,11 +45,6 @@ AIRTABLE_FIELDS = {
     'icp': 'fldL1kkrGflCtOxwa'
 }
 
-# Font configuration
-FONT_DIR = "fonts"
-ARIAL_REGULAR_URL = "https://example.com/path/to/arial.ttf"
-ARIAL_BOLD_URL = "https://example.com/path/to/arialbd.ttf"
-
 # Save the original print function
 original_print = builtins.print
 
@@ -64,20 +58,6 @@ def patched_print(*args, **kwargs):
 
 # Patch the print function
 builtins.print = patched_print
-
-def download_font(url, font_path):
-    if not os.path.exists(font_path):
-        response = requests.get(url)
-        response.raise_for_status()
-        with open(font_path, 'wb') as f:
-            f.write(response.content)
-        logging.info(f"Downloaded font from {url} to {font_path}")
-
-def ensure_fonts():
-    if not os.path.exists(FONT_DIR):
-        os.makedirs(FONT_DIR)
-    download_font(ARIAL_REGULAR_URL, os.path.join(FONT_DIR, "arial.ttf"))
-    download_font(ARIAL_BOLD_URL, os.path.join(FONT_DIR, "arialbd.ttf"))
 
 @traceable
 async def send_to_airtable(email, icp_output):
@@ -219,83 +199,116 @@ def format_output(output):
                 if stripped_line.startswith("-"):
                     content_lines.append(stripped_line)
                 else:
-                    content_lines[-1] += f" {stripped_line}"
-            formatted_output += f"{header}\n" + "\n".join(content_lines) + "\n\n"
-    return formatted_output
+                    if content_lines:
+                        content_lines[-1] += " " + stripped_line
+                    else:
+                        content_lines.append(stripped_line)
+            content = "\n".join(content_lines)
+            formatted_output += f"{header}\n{content}\n\n"
+    return formatted_output.strip()
 
-def create_pdf(output, email):
+@traceable
+def generate_pdf(icp_output, font_name="Arial", custom_font=True):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font('Arial', size=12)
 
-    output = re.sub(r'(?<=\w)-\n(?=\w)', '', output)
-    output = re.sub(r'(?<=\w)\n(?=\w)', ' ', output)
-    output = re.sub(r'(?<=\w)\n(?=-)', '\n\n', output)
-    pdf.multi_cell(0, 10, output)
+    if custom_font:
+        # Add regular and bold variants of the custom font
+        pdf.add_font(font_name, style="", fname="fonts/arial.ttf")
+        pdf.add_font(font_name, style="B", fname="fonts/arialbd.ttf")
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"{email}_output_{timestamp}.pdf"
-    pdf_path = os.path.join("outputs", file_name)
-    pdf.output(pdf_path)
-    logging.info(f"PDF created successfully at {pdf_path}")
-    return pdf_path
+    pdf.set_font(font_name, size=12)  # Use the specified font
 
-async def send_email(to_address, attachment_path):
-    msg = MIMEMultipart()
-    msg['From'] = SENDER_EMAIL
-    msg['To'] = to_address
-    msg['Subject'] = 'ICP Report'
-    body = 'Please find attached your ICP report.'
-    msg.attach(MIMEText(body, 'plain'))
+    icp_output = format_output(icp_output)
 
-    with open(attachment_path, 'rb') as attachment:
-        part = MIMEBase('application', 'octet-stream')
-        part.set_payload(attachment.read())
-        encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(attachment_path)}')
-        msg.attach(part)
+    def add_markdown_text(pdf, text):
+        lines = text.split('\n')
+        for line in lines:
+            if line.startswith('###'):
+                pdf.set_font(font_name, style='B', size=16)
+                pdf.multi_cell(0, 10, line[3:].strip())
+            elif line.startswith('##'):
+                pdf.set_font(font_name, style='B', size=14)
+                pdf.multi_cell(0, 10, line[2:].stripHere's the continuation and completion of the updated Streamlit script:
 
+```python
+            elif line.startswith('#'):
+                pdf.set_font(font_name, style='B', size=18)
+                pdf.multi_cell(0, 10, line[1:].strip())
+            else:
+                pdf.set_font(font_name, size=12)
+                pdf.multi_cell(0, 10, line.strip())
+
+    add_markdown_text(pdf, icp_output)
+
+    output_filename = "icp_report.pdf"
+    pdf.output(output_filename)
+    logging.info(f"PDF generated: {output_filename}")
+    return output_filename
+
+@traceable
+def send_email_with_pdf(receiver_email, pdf_filename):
     try:
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            text = msg.as_string()
-            server.sendmail(SENDER_EMAIL, to_address, text)
-        logging.info(f"Email sent successfully to {to_address}")
+        msg = MIMEMultipart()
+        msg['From'] = SENDER_EMAIL
+        msg['To'] = receiver_email
+        msg['Subject'] = 'Your ICP Report'
+        body = 'Please find attached your ICP report.'
+        msg.attach(MIMEText(body, 'plain'))
+
+        with open(pdf_filename, "rb") as attachment:
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload(attachment.read())
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', f"attachment; filename= {pdf_filename}")
+            msg.attach(part)
+
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SENDER_EMAIL, SENDER_PASSWORD)
+        text = msg.as_string()
+        server.sendmail(SENDER_EMAIL, receiver_email, text)
+        server.quit()
+        logging.info(f"Email sent to {receiver_email} with attachment {pdf_filename}")
+        return True
     except Exception as e:
-        logging.error(f"Failed to send email: {e}")
+        logging.error(f"Failed to send email: {str(e)}")
+        return False
 
 def main():
     st.title("ICP Report Generator")
 
-    email = st.text_input("Enter your email")
-    product_service = st.text_input("Enter the product/service name")
-    price = st.text_input("Enter the price")
-    currency = st.selectbox("Select the currency", ["USD", "EUR", "GBP"])
-    payment_frequency = st.selectbox("Select the payment frequency", ["One-time", "Monthly", "Annually"])
-    selling_scope = st.selectbox("Select the selling scope", ["Locally", "Nationally", "Internationally"])
-    location = st.text_input("Enter the location (if selling locally)")
+    with st.form("input_form"):
+        email = st.text_input("Email")
+        product_service = st.text_input("Product/Service")
+        price = st.number_input("Price", min_value=0.0, format="%f")
+        currency = st.selectbox("Currency", ["USD", "EUR", "GBP"])
+        payment_frequency = st.selectbox("Payment Frequency", ["One-time", "Monthly", "Yearly"])
+        selling_scope = st.selectbox("Selling Scope", ["Locally", "Globally"])
+        location = st.text_input("Location", disabled=(selling_scope == "Globally"))
 
-    if st.button("Generate Report"):
-        try:
-            ensure_fonts()
-            credits, record_id = asyncio.run(check_credits(email))
-            if credits > 0:
-                output = asyncio.run(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location))
-                formatted_output = format_output(output)
-                pdf_path = create_pdf(formatted_output, email)
-                asyncio.run(send_email(email, pdf_path))
-                asyncio.run(send_to_airtable(email, formatted_output))
+        submit_button = st.form_submit_button(label="Generate ICP Report")
+
+    if submit_button:
+        st.info("Checking your credits...")
+
+        credits, record_id = asyncio.run(check_credits(email))
+        if credits > 0:
+            st.success("Credits available. Generating ICP report...")
+            icp_output = asyncio.run(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location))
+            st.write("ICP Report Generated")
+
+            pdf_filename = generate_pdf(icp_output)
+            st.success("ICP report generated and saved as PDF")
+
+            if send_email_with_pdf(email, pdf_filename):
+                st.success("Email sent successfully")
                 new_credits = credits - 1
                 asyncio.run(update_credits(record_id, new_credits))
-                st.success("Report generated and sent successfully!")
             else:
-                st.warning("Insufficient credits to generate the report.")
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
-            logging.error(f"An error occurred: {e}")
-            logging.debug(traceback.format_exc())
+                st.error("Failed to send email. Please try again later.")
+        else:
+            st.error("No credits available. Please purchase more credits to generate the ICP report.")
 
 if __name__ == "__main__":
     main()
-

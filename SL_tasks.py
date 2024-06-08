@@ -33,8 +33,8 @@ icp_task = Task(
             "If insufficient information is provided about the target customer or product/service, make reasonable assumptions or provide generic examples, while clearly stating the limitations.""",
     )
 channels_task = Task(
-    description=f"""Develop a comprehensive strategy for acquiring the ideal customer profile, including identifying and leveraging the most effective channels for marketing, sales, and customer discovery. Focus on the following selected marketing channels: {', '.join(marketing_channels)}.""",
-    expected_output=f"""in markdown combine narrative and expository writing styles, Create a detailed strategic plan document of 3200 words that outlines the approach to acquire the ideal customer profile for {product} and {product2}, focusing on the following selected marketing channels: {', '.join(marketing_channels)}. The document should include:
+    description=f"""Develop a comprehensive strategy for acquiring the ideal customer profile, including identifying and leveraging the most effective channels for marketing, sales, and customer discovery. Focus on the following selected marketing channels:.""",
+    expected_output=f""" combine narrative and expository writing styles, Create a detailed strategic plan document of 500 words that outlines the approach to acquire the ideal customer profile for {product} , focusing on the following selected marketing channels: . The document should include:
          1. **Title Page**
          - Document title
          2. **Executive Summary**

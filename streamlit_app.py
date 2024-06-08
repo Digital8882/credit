@@ -1,6 +1,6 @@
 import streamlit as st
 from SL_agents import researcher
-from SL_tasks import icp_task
+from SL_tasks import icp_task, channels_task  # Import the channels_task
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
 from crewai import Crew, Process, Task
@@ -42,7 +42,8 @@ AIRTABLE_TABLE_NAME = 'tblaMtAcnVa4nwnby'
 AIRTABLE_FIELDS = {
     'email': 'fldsx1iIk4FiRaLi8',
     'credits': 'fldxwzSmMmldMGlgI',
-    'icp': 'fldL1kkrGflCtOxwa'
+    'icp': 'fldL1kkrGflCtOxwa',
+    'channels': 'flduJ5ubWm0Bs2Ile'  # New field for channels
 }
 
 # Save the original print function
@@ -60,7 +61,7 @@ def patched_print(*args, **kwargs):
 builtins.print = patched_print
 
 @traceable
-async def send_to_airtable(email, icp_output):
+async def send_to_airtable(email, icp_output, channels_output):
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}",
@@ -69,7 +70,8 @@ async def send_to_airtable(email, icp_output):
     data = {
         "fields": {
             "Email": email,
-            AIRTABLE_FIELDS['icp']: icp_output
+            AIRTABLE_FIELDS['icp']: icp_output,
+            AIRTABLE_FIELDS['channels']: channels_output  # Add channels output
         }
     }
     async with httpx.AsyncClient() as client:
@@ -91,7 +93,7 @@ async def retrieve_from_airtable(record_id):
         record = response.json()
         fields = record.get('fields', {})
         logging.info("Data retrieved from Airtable successfully")
-        return fields.get(AIRTABLE_FIELDS['icp'], '')
+        return fields.get(AIRTABLE_FIELDS['icp'], ''), fields.get(AIRTABLE_FIELDS['channels'], '')  # Retrieve both icp and channels
 
 @traceable
 async def check_credits(email):
@@ -158,7 +160,7 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
     new_task = Task(description=task_description, expected_output="...")
 
     project_crew = Crew(
-        tasks=[new_task, icp_task],
+        tasks=[new_task, icp_task, channels_task],  # Include channels_task
         agents=[researcher],  # Removed report_writer
         manager_llm=ChatOpenAI(temperature=0, model="gpt-4o"),
         max_rpm=5,
@@ -171,8 +173,9 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
             logging.info(f"Starting crew process, attempt {attempt + 1}")
             results = project_crew.kickoff()
             icp_output = icp_task.output.exported_output if hasattr(icp_task.output, 'exported_output') else "No ICP output"
+            channels_output = channels_task.output.exported_output if hasattr(channels_task.output, 'exported_output') else "No Channels output"  # Handle channels output
             logging.info("Crew process completed successfully")
-            return icp_output
+            return icp_output, channels_output  # Return both outputs
         except BrokenPipeError as e:
             logging.error(f"BrokenPipeError occurred on attempt {attempt + 1}: {e}")
             logging.debug(traceback.format_exc())
@@ -208,7 +211,7 @@ def format_output(output):
     return formatted_output.strip()
 
 @traceable
-def generate_pdf(icp_output, font_name="Arial", custom_font=True):
+def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=True):
     pdf = FPDF()
     pdf.add_page()
 
@@ -220,6 +223,7 @@ def generate_pdf(icp_output, font_name="Arial", custom_font=True):
     pdf.set_font(font_name, size=12)  # Use the specified font
 
     icp_output = format_output(icp_output)
+    channels_output = format_output(channels_output)
 
     def add_markdown_text(pdf, text):
         lines = text.split('\n')
@@ -237,7 +241,9 @@ def generate_pdf(icp_output, font_name="Arial", custom_font=True):
                 pdf.set_font(font_name, size=12)
                 pdf.multi_cell(0, 10, line.strip())
 
-    add_markdown_text(pdf, icp_output)
+    add_markdown_text(pdf, "## ICP Output\n" + icp_output)  # Add a header for ICP
+    pdf.add_page()  # Add a new page for channels output
+    add_markdown_text(pdf, "## Channels Output\n" + channels_output)  # Add a header for Channels
 
     output_filename = "icp_report.pdf"
     pdf.output(output_filename)
@@ -251,8 +257,8 @@ def send_email_with_pdf(receiver_email, pdf_filename):
         msg = MIMEMultipart()
         msg['From'] = SENDER_EMAIL
         msg['To'] = receiver_email
-        msg['Subject'] = 'Your ICP Report'
-        body = 'Please find attached your ICP report.'
+        msg['Subject'] = 'Your ICP and Channels Report'
+        body = 'Please find attached your ICP and Channels report.'
         msg.attach(MIMEText(body, 'plain'))
 
         with open(pdf_filename, "rb") as attachment:
@@ -275,7 +281,7 @@ def send_email_with_pdf(receiver_email, pdf_filename):
         return False
 
 def main():
-    st.title("ICP Report Generator")
+    st.title("ICP and Channels Report Generator")
 
     with st.form("input_form"):
         email = st.text_input("Email")
@@ -286,19 +292,19 @@ def main():
         selling_scope = st.selectbox("Selling Scope", ["Locally", "Globally"])
         location = st.text_input("Location", disabled=(selling_scope == "Globally"))
 
-        submit_button = st.form_submit_button(label="Generate ICP Report")
+        submit_button = st.form_submit_button(label="Generate ICP and Channels Report")
 
     if submit_button:
         st.info("Checking your credits...")
 
         credits, record_id = asyncio.run(check_credits(email))
         if credits > 0:
-            st.success("Credits available. Generating ICP report...")
-            icp_output = asyncio.run(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location))
-            st.write("ICP Report Generated")
+            st.success("Credits available. Generating ICP and Channels report...")
+            icp_output, channels_output = asyncio.run(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location))
+            st.write("ICP and Channels Report Generated")
 
-            pdf_filename = generate_pdf(icp_output)
-            st.success("ICP report generated and saved as PDF")
+            pdf_filename = generate_pdf(icp_output, channels_output)
+            st.success("ICP and Channels report generated and saved as PDF")
 
             if send_email_with_pdf(email, pdf_filename):
                 st.success("Email sent successfully")
@@ -307,7 +313,7 @@ def main():
             else:
                 st.error("Failed to send email. Please try again later.")
         else:
-            st.error("No credits available. Please purchase more credits to generate the ICP report.")
+            st.error("No credits available. Please purchase more credits to generate the ICP and Channels report.")
 
 if __name__ == "__main__":
     main()

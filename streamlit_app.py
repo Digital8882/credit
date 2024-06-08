@@ -31,7 +31,7 @@ SENDER_PASSWORD = 'Lovelife1#'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "SL0ll05gfd670o"
+os.environ["LANGSMITH_PROJECT"] = "SL0ll0599670o"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -207,14 +207,31 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
     def add_markdown_text(pdf, text):
         lines = text.split('\n')
         for line in lines:
-            parts = re.split(r'(\*\*.*?\*\*)', line)
-            for part in parts:
-                if part.startswith('**') and part.endswith('**'):
-                    pdf.set_font(font_name, style='B', size=12)
-                    pdf.multi_cell(0, 5, part[2:-2].strip(), align='L')  # Reduced line height
-                    pdf.set_font(font_name, size=12)
-                else:
-                    pdf.multi_cell(0, 5, part.strip(), align='L')  # Reduced line height
+            if line.startswith('####'):
+                pdf.set_font(font_name, style='B', size=12)
+                pdf.multi_cell(0, 5, line[4:].strip(), align='L')  # Reduced line height
+                pdf.set_font(font_name, size=12)
+            elif line.startswith('###'):
+                pdf.set_font(font_name, style='B', size=14)
+                pdf.multi_cell(0, 5, line[3:].strip(), align='L')  # Reduced line height
+                pdf.set_font(font_name, size=12)
+            elif line.startswith('##'):
+                pdf.set_font(font_name, style='B', size=16)
+                pdf.multi_cell(0, 5, line[2:].strip(), align='L')  # Reduced line height
+                pdf.set_font(font_name, size=12)
+            elif line.startswith('#'):
+                pdf.set_font(font_name, style='B', size=18)
+                pdf.multi_cell(0, 5, line[1:].strip(), align='L')  # Reduced line height
+                pdf.set_font(font_name, size=12)
+            else:
+                parts = re.split(r'(\*\*.*?\*\*)', line)
+                for part in parts:
+                    if part.startswith('**') and part.endswith('**'):
+                        pdf.set_font(font_name, style='B', size=12)
+                        pdf.multi_cell(0, 5, part[2:-2].strip(), align='L')  # Reduced line height
+                        pdf.set_font(font_name, size=12)
+                    else:
+                        pdf.multi_cell(0, 5, part.strip(), align='L')  # Reduced line height
 
     # Add ICP Output
     pdf.add_page()
@@ -298,6 +315,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 

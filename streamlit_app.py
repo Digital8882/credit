@@ -38,6 +38,7 @@ AIRTABLE_API_KEY = 'patnWOUVJR780iDNN.de9fb8264698287a5b4206fad59a99871d1fc6dddb
 AIRTABLE_BASE_ID = 'appPcWNUeei7MNMCj'
 AIRTABLE_TABLE_NAME = 'tblaMtAcnVa4nwnby'
 AIRTABLE_FIELDS = {
+    'email': 'fldsx1iIk4FiRaLi8',
     'icp': 'fldL1kkrGflCtOxwa',
     'credits': 'fldxwzSmMmldMGlgI'
 }

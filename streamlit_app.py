@@ -31,7 +31,7 @@ SENDER_PASSWORD = 'Lovelife1#'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "SLddfp0o"
+os.environ["LANGSMITH_PROJECT"] = "SL0ll0ofp0o"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -210,12 +210,10 @@ def format_output(output):
             formatted_output += f"{header}\n{content}\n\n"
     return formatted_output.strip()
 
-
 @traceable
 def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=True):
     pdf = FPDF()
-    pdf.add_page()
-
+    
     if custom_font:
         # Add regular and bold variants of the custom font
         pdf.add_font(family=font_name, style="", fname="fonts/arial.ttf", uni=True)
@@ -239,21 +237,20 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
                 pdf.set_font(font_name, size=12)
                 pdf.multi_cell(0, 10, line.strip())
 
-    # Process and add ICP Output
+    # Add ICP Output
+    pdf.add_page()
     icp_output = format_output(icp_output)
-    pdf.add_page()  # Add a new page for ICP output
     add_markdown_text(pdf, "## ICP Output\n" + icp_output)
 
-    # Process and add Channels Output
+    # Add Channels Output
+    pdf.add_page()
     channels_output = format_output(channels_output)
-    pdf.add_page()  # Add a new page for Channels output
     add_markdown_text(pdf, "## Channels Output\n" + channels_output)
 
     output_filename = "icp_report.pdf"
     pdf.output(output_filename)
     logging.info(f"PDF generated: {output_filename}")
     return output_filename
-
 
 @traceable
 def send_email_with_pdf(receiver_email, pdf_filename):
@@ -321,4 +318,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -210,6 +210,7 @@ def format_output(output):
             formatted_output += f"{header}\n{content}\n\n"
     return formatted_output.strip()
 
+
 @traceable
 def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=True):
     pdf = FPDF()
@@ -221,9 +222,6 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
         pdf.add_font(family=font_name, style="B", fname="fonts/arialbd.ttf", uni=True)
 
     pdf.set_font(font_name, size=12)  # Use the specified font
-
-    icp_output = format_output(icp_output)
-    channels_output = format_output(channels_output)
 
     def add_markdown_text(pdf, text):
         lines = text.split('\n')
@@ -241,9 +239,15 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
                 pdf.set_font(font_name, size=12)
                 pdf.multi_cell(0, 10, line.strip())
 
-    add_markdown_text(pdf, "## ICP Output\n" + icp_output)  # Add a header for ICP
-    pdf.add_page()  # Add a new page for channels output
-    add_markdown_text(pdf, "## Channels Output\n" + channels_output)  # Add a header for Channels
+    # Process and add ICP Output
+    icp_output = format_output(icp_output)
+    pdf.add_page()  # Add a new page for ICP output
+    add_markdown_text(pdf, "## ICP Output\n" + icp_output)
+
+    # Process and add Channels Output
+    channels_output = format_output(channels_output)
+    pdf.add_page()  # Add a new page for Channels output
+    add_markdown_text(pdf, "## Channels Output\n" + channels_output)
 
     output_filename = "icp_report.pdf"
     pdf.output(output_filename)
@@ -317,3 +321,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

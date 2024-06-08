@@ -228,27 +228,27 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
         for line in lines:
             if line.startswith('###'):
                 pdf.set_font(font_name, style='B', size=16)
-                pdf.multi_cell(0, 8, line[3:].strip())  # Reduced line height
+                pdf.multi_cell(0, 6, line[3:].strip())  # Further reduced line height
             elif line.startswith('##'):
                 pdf.set_font(font_name, style='B', size=14)
-                pdf.multi_cell(0, 8, line[2:].strip())  # Reduced line height
+                pdf.multi_cell(0, 6, line[2:].strip())  # Further reduced line height
             elif line.startswith('#'):
                 pdf.set_font(font_name, style='B', size=18)
-                pdf.multi_cell(0, 8, line[1:].strip())  # Reduced line height
+                pdf.multi_cell(0, 6, line[1:].strip())  # Further reduced line height
             else:
                 # Replace **bold** with FPDF's bold formatting
                 while '**' in line:
                     start = line.find('**')
                     end = line.find('**', start + 2)
                     if end != -1:
-                        pdf.multi_cell(0, 8, line[:start].strip())  # Reduced line height
+                        pdf.multi_cell(0, 6, line[:start].strip())  # Further reduced line height
                         pdf.set_font(font_name, style='B', size=12)
-                        pdf.multi_cell(0, 8, line[start + 2:end].strip())  # Reduced line height
+                        pdf.multi_cell(0, 6, line[start + 2:end].strip())  # Further reduced line height
                         pdf.set_font(font_name, size=12)
                         line = line[end + 2:]
                     else:
                         break
-                pdf.multi_cell(0, 8, line.strip())  # Reduced line height
+                pdf.multi_cell(0, 6, line.strip())  # Further reduced line height
 
     # Add ICP Output
     pdf.add_page()
@@ -331,4 +331,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

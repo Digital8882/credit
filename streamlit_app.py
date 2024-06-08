@@ -188,6 +188,8 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
             logging.debug(traceback.format_exc())
             raise
 
+import re
+
 @traceable
 def format_output(output):
     formatted_output = ""
@@ -226,16 +228,27 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
         for line in lines:
             if line.startswith('###'):
                 pdf.set_font(font_name, style='B', size=16)
-                pdf.multi_cell(0, 10, line[3:].strip())
+                pdf.multi_cell(0, 8, line[3:].strip())  # Reduced line height
             elif line.startswith('##'):
                 pdf.set_font(font_name, style='B', size=14)
-                pdf.multi_cell(0, 10, line[2:].strip())
+                pdf.multi_cell(0, 8, line[2:].strip())  # Reduced line height
             elif line.startswith('#'):
                 pdf.set_font(font_name, style='B', size=18)
-                pdf.multi_cell(0, 10, line[1:].strip())
+                pdf.multi_cell(0, 8, line[1:].strip())  # Reduced line height
             else:
-                pdf.set_font(font_name, size=12)
-                pdf.multi_cell(0, 10, line.strip())
+                # Replace **bold** with FPDF's bold formatting
+                while '**' in line:
+                    start = line.find('**')
+                    end = line.find('**', start + 2)
+                    if end != -1:
+                        pdf.multi_cell(0, 8, line[:start].strip())  # Reduced line height
+                        pdf.set_font(font_name, style='B', size=12)
+                        pdf.multi_cell(0, 8, line[start + 2:end].strip())  # Reduced line height
+                        pdf.set_font(font_name, size=12)
+                        line = line[end + 2:]
+                    else:
+                        break
+                pdf.multi_cell(0, 8, line.strip())  # Reduced line height
 
     # Add ICP Output
     pdf.add_page()
@@ -318,3 +331,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

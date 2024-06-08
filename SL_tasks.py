@@ -34,13 +34,13 @@ icp_task = Task(
     )
 channels_task = Task(
     description=f"""Develop a comprehensive strategy for acquiring the ideal customer profile, including identifying and leveraging the most effective channels for marketing, sales, and customer discovery. Focus on the following selected marketing channels:.""",
-    expected_output=f""" combine narrative and expository writing styles, Create a detailed strategic plan document of 500 words that outlines the approach to acquire the ideal customer profile for {product} , focusing on the following selected marketing channels: . The document should include:
+    expected_output=f""" combine narrative and expository writing styles, Create a detailed strategic plan document of 500 words that outlines the approach to acquire the ideal customer profile for product , focusing on the following selected marketing channels: . The document should include:
          1. **Title Page**
          - Document title
          2. **Executive Summary**
          - A brief overview of the strategic plan's objectives and key recommendations.
          3. **Introduction**
-         - Explanation of the importance of identifying and acquiring the ideal customer profile for {product}.
+         - Explanation of the importance of identifying and acquiring the ideal customer profile for product.
          4. **Ideal Customer Profile**
          - A detailed description of the ideal customer profile, including demographic, geographic, and psychographic characteristics.
          5. **Marketing Channels**
@@ -56,11 +56,11 @@ channels_task = Task(
          - A step-by-step action plan for implementing the recommended strategies across the selected marketing channels, sales, and customer discovery channels.
          - Key performance indicators (KPIs) and metrics for measuring success and impact on acquiring the ideal customer profile.
          9. **Conclusion**
-         - Summary of the strategic plan and its expected impact on acquiring the ideal customer profile for {product} .
+         - Summary of the strategic plan and its expected impact on acquiring the ideal customer profile for product .
          **Formatting Instructions:**
          - Organize the report with clear headings, subheadings, bullet points, and numbered lists for easy navigation and readability.
          - Maintain a professional, analytical tone throughout the document to ensure clarity and accessibility for team members across different functions.
-         This strategic plan will serve as a guide for the team to effectively target and acquire the ideal customer profile, leveraging the most suitable marketing and sales channels to drive business growth for {product} and {product2}. Ensure that all recommendations are backed by data and analysis, and clearly articulate the rationale behind each strategy.""",
+         This strategic plan will serve as a guide for the team to effectively target and acquire the ideal customer profile, leveraging the most suitable marketing and sales channels to drive business growth for product. Ensure that all recommendations are backed by data and analysis, and clearly articulate the rationale behind each strategy.""",
     )
 
 

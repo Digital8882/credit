@@ -208,7 +208,7 @@ def format_output(output):
     return formatted_output.strip()
 
 @traceable
-def generate_pdf(icp_output, font_name="Courier", custom_font=False):
+def generate_pdf(icp_output, font_name="Times", custom_font=False):
     pdf = FPDF()
     pdf.add_page()
 

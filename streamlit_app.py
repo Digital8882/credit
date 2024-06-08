@@ -102,7 +102,11 @@ async def check_credits(email):
         records = response.json().get('records', [])
         if records:
             fields = records[0].get('fields', {})
-            return fields.get(AIRTABLE_FIELDS['credits'], 0), records[0]['id']
+            credits = fields.get(AIRTABLE_FIELDS['credits'], 0)
+            record_id = records[0]['id']
+            logging.info(f"Credits for {email}: {credits}")
+            return credits, record_id
+        logging.info(f"No records found for {email}")
         return 0, None
 
 @traceable

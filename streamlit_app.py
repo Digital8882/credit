@@ -28,6 +28,7 @@ SMTP_PORT = 587
 SENDER_EMAIL = 'info@swiftlaunch.biz'
 SENDER_PASSWORD = 'Lovelife1#'
 
+# Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
 os.environ["LANGSMITH_PROJECT"] = "SL0llu1p0o"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
@@ -97,7 +98,6 @@ async def check_credits(email):
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}"
     }
-    # Using filterByFormula to find the record with the given email
     params = {
         "filterByFormula": f"{{{AIRTABLE_FIELDS['email']}}}='{email}'"
     }
@@ -114,7 +114,6 @@ async def check_credits(email):
         else:
             logging.info(f"Email {email} not found.")
         return 0, None
-
 
 @traceable
 async def update_credits(record_id, new_credits):

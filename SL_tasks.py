@@ -32,5 +32,35 @@ icp_task = Task(
             "Emphasize the importance of continuously refining the ICP based on new customer data, market trends, and product changes, and suggest a timeline for periodic reviews (e.g., quarterly or bi-annually)."
             "If insufficient information is provided about the target customer or product/service, make reasonable assumptions or provide generic examples, while clearly stating the limitations.""",
     )
+channels_task = Task(
+    description=f"""Develop a comprehensive strategy for acquiring the ideal customer profile, including identifying and leveraging the most effective channels for marketing, sales, and customer discovery. Focus on the following selected marketing channels: {', '.join(marketing_channels)}.""",
+    expected_output=f"""in markdown combine narrative and expository writing styles, Create a detailed strategic plan document of 3200 words that outlines the approach to acquire the ideal customer profile for {product} and {product2}, focusing on the following selected marketing channels: {', '.join(marketing_channels)}. The document should include:
+         1. **Title Page**
+         - Document title
+         2. **Executive Summary**
+         - A brief overview of the strategic plan's objectives and key recommendations.
+         3. **Introduction**
+         - Explanation of the importance of identifying and acquiring the ideal customer profile for {product}.
+         4. **Ideal Customer Profile**
+         - A detailed description of the ideal customer profile, including demographic, geographic, and psychographic characteristics.
+         5. **Marketing Channels**
+         -  Analysis of the selected marketing channels  to reach the ideal customer profile.
+         - Recommendations for optimizing these channels to increase visibility and engagement with the target audience.
+         6. **Sales Channels**
+         - Evaluation of sales channels (direct sales, e-commerce, partnerships, etc.) for effectively selling to the ideal customer profile.
+         - Strategies for enhancing these channels to improve conversion rates and customer acquisition.
+         7. **Customer Discovery Channels**
+         - Identification of channels and methods for locating and understanding the needs and behaviors of the ideal customer profile.
+         - Techniques for leveraging customer feedback and insights to refine marketing and sales strategies.
+         8. **Action Plan**
+         - A step-by-step action plan for implementing the recommended strategies across the selected marketing channels, sales, and customer discovery channels.
+         - Key performance indicators (KPIs) and metrics for measuring success and impact on acquiring the ideal customer profile.
+         9. **Conclusion**
+         - Summary of the strategic plan and its expected impact on acquiring the ideal customer profile for {product} .
+         **Formatting Instructions:**
+         - Organize the report with clear headings, subheadings, bullet points, and numbered lists for easy navigation and readability.
+         - Maintain a professional, analytical tone throughout the document to ensure clarity and accessibility for team members across different functions.
+         This strategic plan will serve as a guide for the team to effectively target and acquire the ideal customer profile, leveraging the most suitable marketing and sales channels to drive business growth for {product} and {product2}. Ensure that all recommendations are backed by data and analysis, and clearly articulate the rationale behind each strategy.""",
+    )
 
 

@@ -191,15 +191,12 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
 
 @traceable
 def format_output(output):
-    # Process the text to ensure correct formatting and spacing
-    formatted_output = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', output)
-    formatted_output = re.sub(r'# ', '', formatted_output)  # Remove header markers
-    return formatted_output.strip()
+    return output.strip()
 
 @traceable
 def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=True):
     pdf = FPDF()
-    
+
     if custom_font:
         # Add regular and bold variants of the custom font
         pdf.add_font(family=font_name, style="", fname="fonts/arial.ttf", uni=True)
@@ -210,26 +207,14 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
     def add_markdown_text(pdf, text):
         lines = text.split('\n')
         for line in lines:
-            # Handle headers
-            if line.startswith('###'):
-                pdf.set_font(font_name, style='B', size=16)
-                pdf.multi_cell(0, 5, line[3:].strip())  # Reduced line height
-            elif line.startswith('##'):
-                pdf.set_font(font_name, style='B', size=14)
-                pdf.multi_cell(0, 5, line[2:].strip())  # Reduced line height
-            elif line.startswith('#'):
-                pdf.set_font(font_name, style='B', size=18)
-                pdf.multi_cell(0, 5, line[1:].strip())  # Reduced line height
-            else:
-                # Replace **bold** with FPDF's bold formatting
-                bold_parts = re.split(r'(\*\*.*?\*\*)', line)
-                for part in bold_parts:
-                    if part.startswith('**') and part.endswith('**'):
-                        pdf.set_font(font_name, style='B', size=12)
-                        pdf.multi_cell(0, 5, part[2:-2].strip(), align='J')  # Reduced line height
-                        pdf.set_font(font_name, size=12)
-                    else:
-                        pdf.multi_cell(0, 5, part.strip(), align='J')  # Reduced line height
+            parts = re.split(r'(\*\*.*?\*\*)', line)
+            for part in parts:
+                if part.startswith('**') and part.endswith('**'):
+                    pdf.set_font(font_name, style='B', size=12)
+                    pdf.multi_cell(0, 5, part[2:-2].strip(), align='L')  # Reduced line height
+                    pdf.set_font(font_name, size=12)
+                else:
+                    pdf.multi_cell(0, 5, part.strip(), align='L')  # Reduced line height
 
     # Add ICP Output
     pdf.add_page()
@@ -245,8 +230,6 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
     pdf.output(output_filename)
     logging.info(f"PDF generated: {output_filename}")
     return output_filename
-
-# Other functions remain unchanged
 
 
 @traceable

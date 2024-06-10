@@ -15,7 +15,7 @@ icp_task = Task(
             "If the majority of the target customers are men, use a male example in the profile. If the majority are women, use a female example."
             "The ICP should be written in a professional, analytical tone, with clarity and accessibility necessary for understanding by team members across different functions."
             "Remember to regularly review and update the ICP based on new customer data, market trends, and product changes.""",
-    expected_output=f""" Create an ideal customer profile document of approximately 500 words , including:"
+    expected_output=f""" Create an ideal customer profile document of approximately 1000 words , including:"
             "a story-like format that is easy to understand and remember. For example:"
             "Meet [Name], a [age]-year-old [gender] who works as a [occupation] in [location]. [Name] values [values] and enjoys [interests/hobbies] in their free time. As a [personality trait] person, [Name] struggles with [pain point/challenge] when it comes to [product/service category]. They aspire to [goal/desire] and believe that the right [product/service] can help them achieve this. [Name] prefers to communicate via [preferred channels] and often consumes media through [media habits]. When considering a purchase, [Name] typically [decision-making process description] and their main concerns are [objections/hesitations]."
             "- A detailed description of the target customer, including:"
@@ -34,7 +34,7 @@ icp_task = Task(
 def get_channels_task_template(marketing_channels):
     return Task(
         description=f"""Develop a comprehensive strategy for acquiring the ideal customer profile, including identifying and leveraging the most effective channels for marketing, sales, and customer discovery. Focus on the following selected marketing channels: {', '.join(marketing_channels)}.""",
-        expected_output=f"""Combine narrative and expository writing styles. Create a detailed strategic plan document of 500 words that outlines the approach to acquire the ideal customer profile for product, focusing on the following selected marketing channels: {', '.join(marketing_channels)}. The document should include:
+        expected_output=f"""Combine narrative and expository writing styles. Create a detailed strategic plan document of 1200 words that outlines the approach to acquire the ideal customer profile for product, focusing on the following selected marketing channels: {', '.join(marketing_channels)}. The document should include:
              1. **Title Page**
              - Document title
              2. **Executive Summary**

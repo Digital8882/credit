@@ -217,8 +217,7 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
                 continue
 
             if line.startswith('####'):
-                pdf.set_font(font_name, style='B',
-                                pdf.set_font(font_name, style='B', size=12)
+                pdf.set_font(font_name, style='B', size=12)
                 pdf.multi_cell(0, 5, line[4:].strip(), align='L')  # Reduced line height
                 pdf.set_font(font_name, size=12)
             elif line.startswith('###'):
@@ -257,6 +256,7 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
     pdf.output(output_filename)
     logging.info(f"PDF generated: {output_filename}")
     return output_filename
+
 
 @traceable
 def send_email_with_pdf(receiver_email, pdf_filename):

@@ -1,6 +1,6 @@
 import streamlit as st
 from SL_agents import researcher
-from SL_tasks import icp_task  # Import only icp_task
+from SL_tasks import icp_task, get_channels_task_template  # Import the function
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
 from crewai import Crew, Process, Task
@@ -31,7 +31,7 @@ SENDER_PASSWORD = 'Lovelife1#'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "SL0ll0nip599670o"
+os.environ["LANGSMITH_PROJECT"] = "nip"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -160,37 +160,7 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
 
     new_task = Task(description=task_description, expected_output="...")
 
-    channels_task = Task(
-        description=f"""Develop a comprehensive strategy for acquiring the ideal customer profile, including identifying and leveraging the most effective channels for marketing, sales, and customer discovery. Focus on the following selected marketing channels: {', '.join(marketing_channels)}.""",
-        expected_output=f"""Combine narrative and expository writing styles. Create a detailed strategic plan document of 500 words that outlines the approach to acquire the ideal customer profile for product, focusing on the following selected marketing channels: {', '.join(marketing_channels)}. The document should include:
-             1. **Title Page**
-             - Document title
-             2. **Executive Summary**
-             - A brief overview of the strategic plan's objectives and key recommendations.
-             3. **Introduction**
-             - Explanation of the importance of identifying and acquiring the ideal customer profile for product.
-             4. **Ideal Customer Profile**
-             - A detailed description of the ideal customer profile, including demographic, geographic, and psychographic characteristics.
-             5. **Marketing Channels**
-             - Analysis of the selected marketing channels to reach the ideal customer profile.
-             - Recommendations for optimizing these channels to increase visibility and engagement with the target audience.
-             6. **Sales Channels**
-             - Evaluation of sales channels (direct sales, e-commerce, partnerships, etc.) for effectively selling to the ideal customer profile.
-             - Strategies for enhancing these channels to improve conversion rates and customer acquisition.
-             7. **Customer Discovery Channels**
-             - Identification of channels and methods for locating and understanding the needs and behaviors of the ideal customer profile.
-             - Techniques for leveraging customer feedback and insights to refine marketing and sales strategies.
-             8. **Action Plan**
-             - A step-by-step action plan for implementing the recommended strategies across the selected marketing channels.
-             - Key performance indicators (KPIs) and metrics for measuring success and impact on acquiring the ideal customer profile.
-             9. **Conclusion**
-             - Summary of the strategic plan and its expected impact on acquiring the ideal customer profile for product .
-             **Formatting Instructions:**
-             - Organize the report with clear headings, subheadings, bullet points, and numbered lists for easy navigation and readability.
-             - Maintain a professional, analytical tone throughout the document to ensure clarity and accessibility for team members across different functions.
-             This strategic plan will serve as a guide for the team to effectively target and acquire the ideal customer profile, leveraging the most suitable marketing and sales channels to drive business growth for product. Ensure that all recommendations are backed by data and analysis, and clearly articulate the rationale behind each strategy.""",
-    )
-    
+    channels_task = get_channels_task_template(marketing_channels)  # Use the function to get the task
 
     project_crew = Crew(
         tasks=[new_task, icp_task, channels_task],

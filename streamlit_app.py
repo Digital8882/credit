@@ -43,8 +43,15 @@ AIRTABLE_FIELDS = {
     'email': 'fldsx1iIk4FiRaLi8',
     'credits': 'fldxwzSmMmldMGlgI',
     'icp': 'fldL1kkrGflCtOxwa',
-    'channels': 'flduJ5ubWm0Bs2Ile'  # New field for channels
+    'channels': 'flduJ5ubWm0Bs2Ile',
+    'methodology': 'fld82XT8UaQMwYaBg',
+    'jtbd': 'fldFFAnoI7to8ZXgu',
+    'pains': 'fldyazmtByhtLBEds',
+    'gains': 'fldudHL1MwHsIHrNO',
+    'propdesign': 'fldXZ4CLKu2p85gPa',
+    'customerj': 'fld9XtbBFTEEiq70F'
 }
+
 
 # Save the original print function
 original_print = builtins.print
@@ -61,7 +68,7 @@ def patched_print(*args, **kwargs):
 builtins.print = patched_print
 
 @traceable
-async def send_to_airtable(email, icp_output, channels_output):
+async def send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output):
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}",
@@ -71,7 +78,13 @@ async def send_to_airtable(email, icp_output, channels_output):
         "fields": {
             "Email": email,
             AIRTABLE_FIELDS['icp']: icp_output,
-            AIRTABLE_FIELDS['channels']: channels_output  # Add channels output
+            AIRTABLE_FIELDS['channels']: channels_output,
+            AIRTABLE_FIELDS['pains']: pains_output,
+            AIRTABLE_FIELDS['gains']: gains_output,
+            AIRTABLE_FIELDS['jtbd']: jtbd_output,
+            AIRTABLE_FIELDS['propdesign']: propdesign_output,
+            AIRTABLE_FIELDS['customerj']: customerj_output,
+            AIRTABLE_FIELDS['methodology']: methodology_output
         }
     }
     async with httpx.AsyncClient() as client:
@@ -93,7 +106,16 @@ async def retrieve_from_airtable(record_id):
         record = response.json()
         fields = record.get('fields', {})
         logging.info("Data retrieved from Airtable successfully")
-        return fields.get(AIRTABLE_FIELDS['icp'], ''), fields.get(AIRTABLE_FIELDS['channels'], '')  # Retrieve both icp and channels
+        return (
+            fields.get(AIRTABLE_FIELDS['icp'], ''),
+            fields.get(AIRTABLE_FIELDS['channels'], ''),
+            fields.get(AIRTABLE_FIELDS['pains'], ''),
+            fields.get(AIRTABLE_FIELDS['gains'], ''),
+            fields.get(AIRTABLE_FIELDS['jtbd'], ''),
+            fields.get(AIRTABLE_FIELDS['propdesign'], ''),
+            fields.get(AIRTABLE_FIELDS['customerj'], ''),
+            fields.get(AIRTABLE_FIELDS['methodology'], '')
+        )
 
 @traceable
 async def check_credits(email):
@@ -151,7 +173,6 @@ async def update_credits(record_id, new_credits):
         logging.info(f"Airtable update response: {record}")
         return record['id']
 
-@traceable
 @traceable
 def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output, font_name="Arial", custom_font=True):
     pdf = FPDF()

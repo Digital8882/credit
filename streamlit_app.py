@@ -60,6 +60,7 @@ def patched_print(*args, **kwargs):
 # Patch the print function
 builtins.print = patched_print
 
+
 @traceable
 async def send_to_airtable(email, icp_output, channels_output):
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"

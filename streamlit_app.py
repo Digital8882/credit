@@ -1,6 +1,6 @@
 import streamlit as st
 from SL_agents import researcher
-from SL_tasks import icp_task, get_channels_task_template  # Import the function
+from SL_tasks import icp_task, get_channels_task_template  # Import the function correctly
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
 from crewai import Crew, Process, Task
@@ -31,7 +31,7 @@ SENDER_PASSWORD = 'Lovelife1#'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "nipsey"
+os.environ["LANGSMITH_PROJECT"] = "nipsey h"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -257,7 +257,6 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
     logging.info(f"PDF generated: {output_filename}")
     return output_filename
 
-
 @traceable
 def send_email_with_pdf(receiver_email, pdf_filename):
     try:
@@ -307,13 +306,10 @@ def main():
     if submit_button:
         st.info("Checking your credits...")
 
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        credits, record_id = loop.run_until_complete(check_credits(email))
-
+        credits, record_id = asyncio.run(check_credits(email))
         if credits > 0:
             st.success("Credits available. Generating ICP and Channels report...")
-            icp_output, channels_output = loop.run_until_complete(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels))
+            icp_output, channels_output = asyncio.run(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels))
             st.write("ICP and Channels Report Generated")
 
             pdf_filename = generate_pdf(icp_output, channels_output)
@@ -322,7 +318,7 @@ def main():
             if send_email_with_pdf(email, pdf_filename):
                 st.success("Email sent successfully")
                 new_credits = credits - 1
-                loop.run_until_complete(update_credits(record_id, new_credits))
+                asyncio.run(update_credits(record_id, new_credits))
             else:
                 st.error("Failed to send email. Please try again later.")
         else:

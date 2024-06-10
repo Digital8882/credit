@@ -39,7 +39,7 @@ product_manager = Agent(
     verbose=True,
     allow_delegation=True,
     max_rpm=5,
-    llm=ChatOpenAI(temperature=0, model="gpt-4o", max_tokens=4096),
+    llm=ChatOpenAI(temperature=0, model="gpt-3.5-turbo", max_tokens=4096),
 )
 marketing_director = Agent(
     role=f'Marketing Director',
@@ -58,7 +58,7 @@ marketing_director = Agent(
     verbose=True,
     max_rpm=5,
     allow_delegation=True,
-    llm=ChatOpenAI(temperature=0, model="gpt-4o", max_tokens=4096),
+    llm=ChatOpenAI(temperature=0, model="gpt-3.5-turbo", max_tokens=4096),
 )
 sales_director = Agent(
     role=f'Sales Director',
@@ -75,5 +75,5 @@ sales_director = Agent(
     verbose=False,
     allow_delegation=True,
     max_rpm=5, 
-    llm=ChatOpenAI(temperature=0, model="gpt-4o", max_tokens=4096),
+    llm=ChatOpenAI(temperature=0, model="gpt-3.5-turbo", max_tokens=4096),
 )

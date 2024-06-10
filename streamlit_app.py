@@ -209,6 +209,13 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
     def add_markdown_text(pdf, text):
         lines = text.split('\n')
         for line in lines:
+            line = line.replace(':', '')  # Remove colons
+            line = line.replace('---', '')  # Remove '---'
+            if line.strip() == '-':
+                line = ''  # Remove lines with only a single dash
+            if not line.strip():  # Skip empty lines to reduce gap
+                continue
+
             if line.startswith('####'):
                 pdf.set_font(font_name, style='B', size=12)
                 pdf.multi_cell(0, 5, line[4:].strip(), align='L')  # Reduced line height

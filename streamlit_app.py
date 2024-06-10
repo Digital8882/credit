@@ -235,7 +235,7 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
             else:
                 parts = re.split(r'(\*\*.*?\*\*)', line)
                 for part in parts:
-                    if part.startswith('**') and part endswith('**'):
+                    if part.startswith('**') and part.endswith('**'):
                         pdf.set_font(font_name, style='B', size=12)
                         pdf.multi_cell(0, 5, part[2:-2].strip(), align='L')  # Reduced line height
                         pdf.set_font(font_name, size=12)

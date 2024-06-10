@@ -1,6 +1,6 @@
 import streamlit as st
 from SL_agents import researcher
-from SL_tasks import icp_task, get_channels_task_template  # Import the function
+from SL_tasks import icp_task, get_channels_task_template  # Import the function correctly
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
 from crewai import Crew, Process, Task

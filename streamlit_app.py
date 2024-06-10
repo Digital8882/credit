@@ -1,6 +1,6 @@
 import streamlit as st
 from SL_agents import researcher
-from SL_tasks import icp_task, get_channels_task_template  # Import the function correctly
+from SL_tasks import icp_task, get_channels_task_template  # Import the function
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
 from crewai import Crew, Process, Task
@@ -31,7 +31,7 @@ SENDER_PASSWORD = 'Lovelife1#'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "nipse"
+os.environ["LANGSMITH_PROJECT"] = "nipsey"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -59,7 +59,6 @@ def patched_print(*args, **kwargs):
 
 # Patch the print function
 builtins.print = patched_print
-
 
 @traceable
 async def send_to_airtable(email, icp_output, channels_output):
@@ -236,7 +235,7 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
             else:
                 parts = re.split(r'(\*\*.*?\*\*)', line)
                 for part in parts:
-                    if part.startswith('**') and part.endswith('**'):
+                    if part.startswith('**') and part endswith('**'):
                         pdf.set_font(font_name, style='B', size=12)
                         pdf.multi_cell(0, 5, part[2:-2].strip(), align='L')  # Reduced line height
                         pdf.set_font(font_name, size=12)

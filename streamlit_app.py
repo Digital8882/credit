@@ -31,7 +31,7 @@ SENDER_PASSWORD = 'Lovelife1#'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "SL0ll0599670o"
+os.environ["LANGSMITH_PROJECT"] = "SL0ll0599670p0o"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -152,10 +152,11 @@ async def update_credits(record_id, new_credits):
         return record['id']
 
 @traceable
-async def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, retries=3):
+async def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, retries=3):
     task_description = f"New task from {email} selling {product_service} at {price} {currency} with payment frequency {payment_frequency}."
     if selling_scope == "Locally":
         task_description += f" Location: {location}."
+    task_description += f" Focus on the following marketing channels: {', '.join(marketing_channels)}."
 
     new_task = Task(description=task_description, expected_output="...")
 
@@ -290,6 +291,9 @@ def main():
         selling_scope = st.selectbox("Selling Scope", ["Locally", "Globally"])
         location = st.text_input("Location", disabled=(selling_scope == "Globally"))
 
+        # Add multi-select for marketing channels
+        marketing_channels = st.multiselect("Marketing Channels", ["Facebook", "Twitter (x)", "Instagram", "Reddit", "TikTok", "SEO", "Blog", "PPC", "LinkedIn"])
+
         submit_button = st.form_submit_button(label="Generate ICP and Channels Report")
 
     if submit_button:
@@ -298,7 +302,7 @@ def main():
         credits, record_id = asyncio.run(check_credits(email))
         if credits > 0:
             st.success("Credits available. Generating ICP and Channels report...")
-            icp_output, channels_output = asyncio.run(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location))
+            icp_output, channels_output = asyncio.run(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels))
             st.write("ICP and Channels Report Generated")
 
             pdf_filename = generate_pdf(icp_output, channels_output)
@@ -315,5 +319,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 

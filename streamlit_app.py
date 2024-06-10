@@ -235,7 +235,7 @@ def generate_pdf(icp_output, channels_output, font_name="Arial", custom_font=Tru
             else:
                 parts = re.split(r'(\*\*.*?\*\*)', line)
                 for part in parts:
-                    if part.startswith('**') and part.endswith('**'):
+                    if part.startswith('**') and part ends with('**'):
                         pdf.set_font(font_name, style='B', size=12)
                         pdf.multi_cell(0, 5, part[2:-2].strip(), align='L')  # Reduced line height
                         pdf.set_font(font_name, size=12)
@@ -306,10 +306,13 @@ def main():
     if submit_button:
         st.info("Checking your credits...")
 
-        credits, record_id = asyncio.run(check_credits(email))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        credits, record_id = loop.run_until_complete(check_credits(email))
+
         if credits > 0:
             st.success("Credits available. Generating ICP and Channels report...")
-            icp_output, channels_output = asyncio.run(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels))
+            icp_output, channels_output = loop.run_until_complete(start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels))
             st.write("ICP and Channels Report Generated")
 
             pdf_filename = generate_pdf(icp_output, channels_output)
@@ -318,7 +321,7 @@ def main():
             if send_email_with_pdf(email, pdf_filename):
                 st.success("Email sent successfully")
                 new_credits = credits - 1
-                asyncio.run(update_credits(record_id, new_credits))
+                loop.run_until_complete(update_credits(record_id, new_credits))
             else:
                 st.error("Failed to send email. Please try again later.")
         else:

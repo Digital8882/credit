@@ -42,7 +42,7 @@ def get_channels_task_template(marketing_channels):
              3. **Introduction**
              - Explanation of the importance of identifying and acquiring the ideal customer profile for product.
              4. **Ideal Customer Profile**
-             - A detailed description of the ideal customer profile, including demographic, geographic, and psychographic characteristics.
+             - A brief description of the ideal customer profile, including demographic, geographic, and psychographic characteristics.
              5. **Marketing Channels**
              - Analysis of the selected marketing channels to reach the ideal customer profile.
              - Recommendations for optimizing these channels to increase visibility and engagement with the target audience.

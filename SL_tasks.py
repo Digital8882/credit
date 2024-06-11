@@ -286,14 +286,4 @@ customerj_task = Task(
         Ensure that the customer journey map is formatted as a concise, structured document that can be easily referenced and shared with team members across different functions."""
 )
 
-methodology_task = Task(
-    description="""You are required to detail the methodology used to gather insights and findings from interviews with AI agents engaged in role-playing scenarios to create synthetic data. This should encompass the processes and strategies for selecting AI agents, designing interview questions, conducting the interviews, and analyzing the collected data, with a focus on ensuring the reliability and validity of the synthetic data produced.""",
-    expected_output="""Provide a comprehensive methodology section in the report that includes the following elements:
-        Participant Selection: Describe the criteria and process used to select AI agents for the interviews, ensuring they effectively represent the target personas and scenarios required for generating reliable synthetic data.
-        Interview Design: Explain how the interview questions were crafted to simulate real-world scenarios and uncover valuable insights about product usability, willingness to pay, switching barriers, customer acquisition channels, feedback on competitors, and market trends.
-        Interview Process: Detail the steps taken to conduct the interviews, including the medium used (e.g., virtual environments, simulation platforms), duration, and protocols followed to ensure consistency, reliability, and replicability of the interactions.
-        Data Analysis: Outline the methods used to analyze the interview data, including how direct quotes, paraphrased viewpoints, and synthesized analyses were used to identify key insights and trends. Emphasize the techniques used to validate and verify the accuracy of the synthetic data against real-world benchmarks.
-        Ethical Considerations: Mention any ethical guidelines followed, such as ensuring the responsible use of AI, maintaining data integrity, and adhering to confidentiality measures, to protect the integrity of the synthetic data and the AI agents involved in the process."""
-)
-
 

@@ -1,6 +1,6 @@
 import streamlit as st
 from SL_agents import researcher, product_manager, marketing_director, sales_director
-from SL_tasks import icp_task, get_channels_task_template, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task, methodology_task
+from SL_tasks import icp_task, get_channels_task_template, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task,
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
 from crewai import Crew, Process, Task
@@ -44,7 +44,6 @@ AIRTABLE_FIELDS = {
     'credits': 'fldxwzSmMmldMGlgI',
     'icp': 'fldL1kkrGflCtOxwa',
     'channels': 'flduJ5ubWm0Bs2Ile',
-    'methodology': 'fld82XT8UaQMwYaBg',
     'jtbd': 'fldFFAnoI7to8ZXgu',
     'pains': 'fldyazmtByhtLBEds',
     'gains': 'fldudHL1MwHsIHrNO',
@@ -67,7 +66,7 @@ def patched_print(*args, **kwargs):
 builtins.print = patched_print
 
 @traceable
-async def send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output):
+async def send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output):
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}",
@@ -83,7 +82,6 @@ async def send_to_airtable(email, icp_output, channels_output, pains_output, gai
             AIRTABLE_FIELDS['jtbd']: jtbd_output,
             AIRTABLE_FIELDS['propdesign']: propdesign_output,
             AIRTABLE_FIELDS['customerj']: customerj_output,
-            AIRTABLE_FIELDS['methodology']: methodology_output
         }
     }
     async with httpx.AsyncClient() as client:
@@ -113,7 +111,6 @@ async def retrieve_from_airtable(record_id):
             fields.get(AIRTABLE_FIELDS['jtbd'], ''),
             fields.get(AIRTABLE_FIELDS['propdesign'], ''),
             fields.get(AIRTABLE_FIELDS['customerj'], ''),
-            fields.get(AIRTABLE_FIELDS['methodology'], '')
         )
 
 @traceable
@@ -177,7 +174,7 @@ def format_output(output):
     return output.strip()
 
 @traceable
-def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output, font_name="Arial"):
+def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, font_name="Arial"):
     pdf = FPDF()
     pdf.add_page()
 
@@ -214,7 +211,6 @@ def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_o
     add_section(pdf, "Swift Launch Report - JTBD Output", jtbd_output)
     add_section(pdf, "Swift Launch Report - Product Design Output", propdesign_output)
     add_section(pdf, "Swift Launch Report - Customer Journey Output", customerj_output)
-    add_section(pdf, "Swift Launch Report - Methodology Output", methodology_output)
 
     output_filename = "Swift_Launch_Report.pdf"
     pdf.output(output_filename)
@@ -281,7 +277,7 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
     channels_task = get_channels_task_template(marketing_channels)
 
     project_crew = Crew(
-        tasks=[new_task, icp_task, channels_task, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task, methodology_task],
+        tasks=[new_task, icp_task, channels_task, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task],
         agents=[researcher, product_manager, marketing_director, sales_director],
         manager_llm=ChatOpenAI(temperature=0, model="gpt-4o"),
         max_rpm=4,
@@ -299,9 +295,8 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
             jtbd_output = jtbd_task.output.exported_output if hasattr(jtbd_task.output, 'exported_output') else "No JTBD output"
             propdesign_output = propdesign_task.output.exported_output if hasattr(propdesign_task.output, 'exported_output') else "No Product Design output"
             customerj_output = customerj_task.output.exported_output if hasattr(customerj_task.output, 'exported_output') else "No Customer Journey output"
-            methodology_output = methodology_task.output.exported_output if hasattr(methodology_task.output, 'exported_output') else "No Methodology output"
             logging.info("Crew process completed successfully")
-            return icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output
+            return icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output,
         except BrokenPipeError as e:
             logging.error(f"BrokenPipeError occurred on attempt {attempt + 1}: {e}")
             logging.debug(traceback.format_exc())
@@ -341,11 +336,11 @@ def main():
         credits, record_id = asyncio.run(check_credits(email))
         if credits > 0:
             st.success("Credits available. Generating Swift Launch Report...")
-            icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output = asyncio.run(
+            icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output = asyncio.run(
                 start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits))
             st.write("Swift Launch Report Generated")
 
-            pdf_filename = generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output)
+            pdf_filename = generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output)
             if pdf_filename:
                 st.success("ICP and Channels report generated and saved as PDF")
 

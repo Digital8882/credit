@@ -177,64 +177,33 @@ def format_output(output):
     return output.strip()
 
 @traceable
-def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output, font_name="Arial", custom_font=True):
+def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output, font_name="Arial"):
     pdf = FPDF()
+    pdf.add_page()
 
-    if custom_font:
-        # Add regular and bold variants of the custom font
-        pdf.add_font(family=font_name, style="", fname="fonts/arial.ttf", uni=True)
-        pdf.add_font(family=font_name, style="B", fname="fonts/arialbd.ttf", uni=True)
-
-    pdf.set_font(font_name, size=12)  # Use the specified font
+    # Set font to Arial with no option for custom fonts
+    pdf.set_font(font_name, size=12)
 
     # Add header function
     def add_header(pdf, text):
-        pdf.set_text_color(255, 165, 0)  # Set text color to orange
-        pdf.set_font(font_name, style='B', size=16)  # Set font to bold and size 16
-        pdf.cell(0, 10, text, ln=True, align='C')
-        pdf.set_text_color(0, 0, 0)  # Reset text color to black
+        pdf.set_font(font_name, 'B', 12)  # Set font to bold and size 12
+        pdf.multi_cell(0, 8, text, align='C')
         pdf.set_font(font_name, size=12)  # Reset font size to 12
 
     def add_markdown_text(pdf, text):
         lines = text.split('\n')
         for line in lines:
-            line = line.replace(':', '')  # Remove colons
-            line = line.replace('---', '')  # Remove '---'
-            if line.strip() == '-':
-                line = ''  # Remove lines with only a single dash
-            if not line.strip():  # Skip empty lines to reduce gap
-                continue
-
-            if line.startswith('####'):
-                pdf.set_font(font_name, style='B', size=12)
-                pdf.multi_cell(0, 5, line[4:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            elif line.startswith('###'):
-                pdf.set_font(font_name, style='B', size=14)
-                pdf.multi_cell(0, 5, line[3:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            elif line.startswith('##'):
-                pdf.set_font(font_name, style='B', size=16)
-                pdf.multi_cell(0, 5, line[2:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            elif line.startswith('#'):
-                pdf.set_font(font_name, style='B', size=18)
-                pdf.multi_cell(0, 5, line[1:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
+            if "**" in line:  # Detect headings and subheadings
+                pdf.set_font(font_name, 'B', 12)
+                line = line.replace("**", "")
             else:
-                parts = re.split(r'(\*\*.*?\*\*)', line)
-                for part in parts:
-                    if part.startswith('**') and part.endswith('**'):
-                        pdf.set_font(font_name, style='B', size=12)
-                        pdf.multi_cell(0, 5, part[2:-2].strip(), align='L')  # Reduced line height
-                        pdf.set_font(font_name, size=12)
-                    else:
-                        pdf.multi_cell(0, 5, part.strip(), align='L')  # Reduced line height
+                pdf.set_font(font_name, size=12)
+            
+            pdf.multi_cell(0, 8, line.strip())  # Use tighter line spacing
 
     def add_section(pdf, title, content):
         pdf.add_page()
         add_header(pdf, title)
-        content = format_output(content)
         add_markdown_text(pdf, content)
 
     # Add sections
@@ -298,6 +267,7 @@ def send_email_with_pdf(receiver_email, pdf_filename):
         logging.error(f"Failed to send email: {str(e)}")
         logging.debug(traceback.format_exc())
         return False
+
 
 @traceable
 async def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits, retries=3):

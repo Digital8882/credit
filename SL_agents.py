@@ -21,7 +21,7 @@ researcher = Agent(
         "Adopt an analytical, empathetic, and narrative-driven tone, weaving factual insights with interviewees' experiences to provide a compelling view of product's market landscape.""",
     verbose=False,
     allow_delegation=True,
-    max_rpm=4,    
+    max_rpm=3,    
     llm=ChatOpenAI(temperature=0.2, model="gpt-3.5-turbo", max_tokens=4096),
 )
 product_manager = Agent(
@@ -38,8 +38,8 @@ product_manager = Agent(
         Your ultimate goal is to create a product that effectively addresses customer needs, provides a superior user experience, and establishes a strong competitive advantage in the market.""", 
     verbose=True,
     allow_delegation=True,
-    max_rpm=5,
-    llm=ChatOpenAI(temperature=0, model="gpt-3.5-turbo", max_tokens=4096),
+    max_rpm=3,
+    llm=ChatOpenAI(temperature=0.2, model="gpt-3.5-turbo", max_tokens=4096),
 )
 marketing_director = Agent(
     role=f'Marketing Director',
@@ -56,9 +56,9 @@ marketing_director = Agent(
         - Tracking and analyzing key marketing performance indicators (KPIs) to measure the effectiveness of marketing campaigns and optimize strategies
         Your strategic mindset, creative flair, customer-centric approach, and ability to anticipate and adapt to market trends enable you to amplify product 's visibility, enhance brand positioning, drive customer acquisition and retention, and maintain a competitive edge in the market.""",
     verbose=True,
-    max_rpm=5,
+    max_rpm=3,
     allow_delegation=True,
-    llm=ChatOpenAI(temperature=0, model="gpt-3.5-turbo", max_tokens=4096),
+    llm=ChatOpenAI(temperature=0.2, model="gpt-3.5-turbo", max_tokens=4096),
 )
 sales_director = Agent(
     role=f'Sales Director',
@@ -74,6 +74,6 @@ sales_director = Agent(
         Your strategic acumen, leadership, and ability to translate market insights into actionable sales strategies have been pivotal in establishing product  as a leader in its category. Your forward-thinking approach and commitment to leveraging comprehensive market intelligence continue to drive product 's success and growth.""",
     verbose=False,
     allow_delegation=True,
-    max_rpm=5, 
-    llm=ChatOpenAI(temperature=0, model="gpt-3.5-turbo", max_tokens=4096),
+    max_rpm=3, 
+    llm=ChatOpenAI(temperature=0.2, model="gpt-3.5-turbo", max_tokens=4096),
 )

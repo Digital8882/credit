@@ -31,7 +31,7 @@ SENDER_PASSWORD = 'Lovelife1#'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "king nip"
+os.environ["LANGSMITH_PROJECT"] = "king nipzino"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -174,96 +174,51 @@ def format_output(output):
     return output.strip()
 
 @traceable
-def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, font_name="Arial"):
+def generate_pdf(result):
     pdf = FPDF()
     pdf.add_page()
-
-    # Set font to Arial with no option for custom fonts
-    pdf.set_font(font_name, size=12)
-
-    # Add header function
-    def add_header(pdf, text):
-        pdf.set_font(font_name, 'B', 12)  # Set font to bold and size 12
-        pdf.multi_cell(0, 8, text, align='C')
-        pdf.set_font(font_name, size=12)  # Reset font size to 12
-
-    def add_markdown_text(pdf, text):
-        lines = text.split('\n')
-        for line in lines:
-            if "**" in line:  # Detect headings and subheadings
-                pdf.set_font(font_name, 'B', 12)
-                line = line.replace("**", "")
-            else:
-                pdf.set_font(font_name, size=12)
-            
-            pdf.multi_cell(0, 8, line.strip())  # Use tighter line spacing
-
-    def add_section(pdf, title, content):
-        pdf.add_page()
-        add_header(pdf, title)
-        add_markdown_text(pdf, content)
-
-    # Add sections
-    add_section(pdf, "Swift Launch Report - ICP Output", icp_output)
-    add_section(pdf, "Swift Launch Report - Channels Output", channels_output)
-    add_section(pdf, "Swift Launch Report - Pains Output", pains_output)
-    add_section(pdf, "Swift Launch Report - Gains Output", gains_output)
-    add_section(pdf, "Swift Launch Report - JTBD Output", jtbd_output)
-    add_section(pdf, "Swift Launch Report - Product Design Output", propdesign_output)
-    add_section(pdf, "Swift Launch Report - Customer Journey Output", customerj_output)
-
-    output_filename = "Swift_Launch_Report.pdf"
-    pdf.output(output_filename)
-    logging.info(f"PDF generated: {output_filename}")
-
-    # Check file size
-    file_size = os.path.getsize(output_filename)
-    logging.info(f"PDF file size: {file_size} bytes")
-    if file_size > 20 * 1024 * 1024:  # Check if file size is greater than 20MB
-        logging.error("PDF file size exceeds the 20MB limit")
-        return None
-
-    return output_filename
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(200, 10, txt="CrewAI Task Result", align='C')
+    pdf.multi_cell(0, 10, txt=str(result))
+    return pdf.output(dest='S').encode('latin1')
 
 @traceable
-def send_email_with_pdf(receiver_email, pdf_filename):
+def send_email(receiver_email, result):
     try:
-        if not pdf_filename or not os.path.exists(pdf_filename):
-            logging.error(f"File not found or exceeds size limit: {pdf_filename}")
-            return False
-
-        logging.info(f"Preparing to send email to {receiver_email} with attachment {pdf_filename}")
-
+        pdf_content = generate_pdf(result)
+        
+        # Email details
+        subject = 'CrewAI Task Result'
+        body = 'Please find attached the result of your CrewAI task.'
+        
+        # Create a multipart message
         msg = MIMEMultipart()
         msg['From'] = SENDER_EMAIL
         msg['To'] = receiver_email
-        msg['Subject'] = 'Your Swift Launch Report'
-        body = 'Please find attached your Swift Launch Report.'
+        msg['Subject'] = subject
+        
+        # Attach the body with the msg instance
         msg.attach(MIMEText(body, 'plain'))
-
-        with open(pdf_filename, "rb") as attachment:
-            part = MIMEBase('application', 'octet-stream')
-            part.set_payload(attachment.read())
-            encoders.encode_base64(part)
-            part.add_header('Content-Disposition', f"attachment; filename={pdf_filename}")
-            msg.attach(part)
-
+        
+        # Attach the PDF file
+        attachment = MIMEBase('application', 'octet-stream')
+        attachment.set_payload(pdf_content)
+        encoders.encode_base64(attachment)
+        attachment.add_header('Content-Disposition', f'attachment; filename=crewAI_result.pdf')
+        msg.attach(attachment)
+        
         logging.info("Connecting to SMTP server")
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.starttls()
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-
-        logging.info("Sending email")
-        text = msg.as_string()
-        server.sendmail(SENDER_EMAIL, receiver_email, text)
-        server.quit()
-        logging.info(f"Email sent to {receiver_email} with attachment {pdf_filename}")
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            logging.info("Sending email")
+            server.sendmail(SENDER_EMAIL, receiver_email, msg.as_string())
+        logging.info(f"Email sent to {receiver_email} with attachment crewAI_result.pdf")
         return True
     except Exception as e:
         logging.error(f"Failed to send email: {str(e)}")
         logging.debug(traceback.format_exc())
         return False
-
 
 @traceable
 async def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits, retries=3):
@@ -336,25 +291,29 @@ def main():
         
         if credits > 0:
             with st.spinner("Generating Swift Launch Report..."):
-                icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output = asyncio.run(
+                icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output = asyncio.run(
                     start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits)
                 )
             
             st.write("Swift Launch Report Generated")
 
-            pdf_filename = generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output)
-            if pdf_filename:
-                st.success("ICP and Channels report generated and saved as PDF")
+            result = {
+                'ICP Output': icp_output,
+                'Channels Output': channels_output,
+                'Pains Output': pains_output,
+                'Gains Output': gains_output,
+                'JTBD Output': jtbd_output,
+                'Product Design Output': propdesign_output,
+                'Customer Journey Output': customerj_output
+            }
 
-                with st.spinner("Sending email with the report..."):
-                    if send_email_with_pdf(email, pdf_filename):
-                        st.success("Email sent successfully")
-                        new_credits = credits - 1
-                        asyncio.run(update_credits(record_id, new_credits))
-                    else:
-                        st.error("Failed to send email. Please try again later.")
-            else:
-                st.error("PDF generation failed or exceeds size limit.")
+            with st.spinner("Sending email with the report..."):
+                if send_email(email, result):
+                    st.success("Email sent successfully")
+                    new_credits = credits - 1
+                    asyncio.run(update_credits(record_id, new_credits))
+                else:
+                    st.error("Failed to send email. Please try again later.")
         else:
             st.error("No credits available. Please purchase more credits to generate the Swift Launch Report.")
 

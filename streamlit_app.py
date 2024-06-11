@@ -102,62 +102,6 @@ async def retrieve_from_airtable(record_id):
         )
 
 @traceable
-async def check_credits(email):
-    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
-    headers = {
-        "Authorization": f"Bearer {AIRTABLE_API_KEY}"
-    }
-    params = {
-        "filterByFormula": f"{{{AIRTABLE_FIELDS['email']}}}='{email}'"
-    }
-
-    async with httpx.AsyncClient() as client:
-        try:
-            logging.info(f"Sending GET request to {url} with params {params}")
-            response = await client.get(url, headers=headers, params=params)
-            logging.info(f"HTTP Request: GET {response.url} {response.status_code} {response.reason_phrase}")
-            response.raise_for_status()
-            logging.debug(f"Response JSON: {response.json()}")
-            records = response.json().get('records', [])
-            if records:
-                fields = records[0].get('fields', {})
-                logging.debug(f"Fields returned for the record: {fields}")
-                credits = fields.get('Credits', 0)
-                if credits is not None:
-                    credits = int(credits)  # Ensure credits is treated as an integer
-                else:
-                    credits = 0
-                record_id = records[0]['id']
-                logging.info(f"Email {email} found. Credits: {credits}")
-                return credits, record_id
-            else:
-                logging.info(f"Email {email} not found.")
-            return 0, None
-        except httpx.HTTPStatusError as e:
-            logging.error(f"HTTP error occurred: {e.response.status_code} - {e.response.text}")
-        except Exception as e:
-            logging.error(f"An error occurred: {str(e)}")
-
-@traceable
-async def update_credits(record_id, new_credits):
-    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}/{record_id}"
-    headers = {
-        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "fields": {
-            AIRTABLE_FIELDS['credits']: new_credits
-        }
-    }
-    async with httpx.AsyncClient() as client:
-        response = await client.patch(url, headers=headers, json=data)
-        response.raise_for_status()
-        record = response.json()
-        logging.info(f"Airtable update response: {record}")
-        return record['id']
-
-@traceable
 def format_output(output):
     return output.strip()
 
@@ -267,30 +211,22 @@ def main():
         submit_button = st.form_submit_button(label="Generate Swift Launch Report")
 
     if submit_button:
-        with st.spinner("Checking your credits..."):
-            credits, record_id = asyncio.run(check_credits(email))
+        with st.spinner("Generating Swift Launch Report..."):
+            icp_output, = asyncio.run(
+                start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits)
+            )
         
-        if credits > 0:
-            with st.spinner("Generating Swift Launch Report..."):
-                icp_output, = asyncio.run(
-                    start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits)
-                )
-            
-            st.write("Swift Launch Report Generated")
+        st.write("Swift Launch Report Generated")
 
-            result = {
-                'ICP Output': icp_output,
-            }
+        result = {
+            'ICP Output': icp_output,
+        }
 
-            with st.spinner("Sending email with the report..."):
-                if send_email(email, result):
-                    st.success("Email sent successfully")
-                    new_credits = credits - 1
-                    asyncio.run(update_credits(record_id, new_credits))
-                else:
-                    st.error("Failed to send email. Please try again later.")
-        else:
-            st.error("No credits available. Please purchase more credits to generate the Swift Launch Report.")
+        with st.spinner("Sending email with the report..."):
+            if send_email(email, result):
+                st.success("Email sent successfully")
+            else:
+                st.error("Failed to send email. Please try again later.")
 
 if __name__ == "__main__":
     main()

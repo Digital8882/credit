@@ -30,7 +30,7 @@ SENDER_PASSWORD = 'Lovelife1#'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "nipsey huss"
+os.environ["LANGSMITH_PROJECT"] = "nipsey hussl"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -98,28 +98,25 @@ icp_task = Task(
 def get_channels_task_template(marketing_channels):
     return Task(
         description=f"""Develop a comprehensive strategy for acquiring the ideal customer profile, including identifying and leveraging the most effective channels for marketing, sales, and customer discovery. Focus on the following selected marketing channels: {', '.join(marketing_channels)}.""",
-        expected_output=f"""Combine narrative and expository writing styles. Create a detailed strategic plan document of 1200 words that outlines the approach to acquire the ideal customer profile for product, focusing on the following selected marketing channels: {', '.join(marketing_channels)}. The document should include:
-             1. **Title Page**
-             - Document title
+        expected_output=f"""Combine narrative and expository writing styles. Create a detailed strategic plan document of 2000 words that outlines the approach to acquire the ideal customer profile for product, focusing on the following selected marketing channels: {', '.join(marketing_channels)}. The document should include:
+             1. **Document title**
              2. **Executive Summary**
              - A brief overview of the strategic plan's objectives and key recommendations.
              3. **Introduction**
              - Explanation of the importance of identifying and acquiring the ideal customer profile for product.
-             4. **Ideal Customer Profile**
-             - A brief description of the ideal customer profile, including demographic, geographic, and psychographic characteristics.
-             5. **Marketing Channels**
+             4 **Marketing Channels**
              - Analysis of the selected marketing channels to reach the ideal customer profile.
              - Recommendations for optimizing these channels to increase visibility and engagement with the target audience.
-             6. **Sales Channels**
+             5. **Sales Channels**
              - Evaluation of sales channels (direct sales, e-commerce, partnerships, etc.) for effectively selling to the ideal customer profile.
              - Strategies for enhancing these channels to improve conversion rates and customer acquisition.
-             7. **Customer Discovery Channels**
+             6. **Customer Discovery Channels**
              - Identification of channels and methods for locating and understanding the needs and behaviors of the ideal customer profile.
              - Techniques for leveraging customer feedback and insights to refine marketing and sales strategies.
-             8. **Action Plan**
+             7. **Action Plan**
              - A step-by-step action plan for implementing the recommended strategies across the selected marketing channels.
              - Key performance indicators (KPIs) and metrics for measuring success and impact on acquiring the ideal customer profile.
-             9. **Conclusion**
+             8. **Conclusion**
              - Summary of the strategic plan and its expected impact on acquiring the ideal customer profile for product .
              **Formatting Instructions:**
              - Organize the report with clear headings, subheadings, bullet points, and numbered lists for easy navigation and readability.
@@ -178,7 +175,6 @@ gains_task = Task(
         Remember, these gains are related to the jobs-to-be-done and not the product itself.
         This report is intended for internal use by the specified teams to inform strategy and improve customer satisfaction.""",
     expected_output="""Synthesize findings into a report of approximately 1200 words, including:
-        - A title
         - An overview of all the identified customer gains
         - A detailed analysis of each gain, highlighting which are expected, required, and desired gains
         - A prioritized list of gains based on their importance and impact on customers' decision-making process, including the reasoning behind the prioritization
@@ -218,7 +214,6 @@ jtbd_task = Task(
         - Synthesize the findings into a clear and concise report that highlights the key JTBD and actionable recommendations
         The simulated interview and report should be written in a professional, analytical tone, ensuring clarity and accessibility necessary for understanding by team members across different functions.""",
     expected_output="""Create a Jobs to Be Done (JTBD) report based on the simulated interview with the ideal customer profile. The report should be approximately 1000 words in markdown and include:
-        - A title
         - An explanation of what JTBD are and why it is essential to identify them
         - At least 8 JTBD identified through the simulated interview, each described in detail, 4-5 of these should be related to the product or service and the rest can be outside the scope of the offering but are still important to the customer
         - A prioritized list of the identified JTBD based on their importance and impact on the customer's decision-making process, including the reasoning behind the prioritization
@@ -321,8 +316,7 @@ customerj_task = Task(
         The map should be written in a professional, analytical tone, with clarity and accessibility necessary for understanding by team members across different functions.
         Format the document as a concise, structured report that can be easily referenced and shared with the team.""",
     expected_output="""combine narrative and expository writing styles, Create a customer journey map document for {product_service} that includes the following sections:
-        1. Title Page
-        - Document title
+        1. Document title
         2. Introduction
         - Explanation of what a customer journey map is and its importance
         - Brief overview of {product_service} and its ideal customer profile
@@ -603,83 +597,6 @@ def format_output(output):
     return output.strip()
 
 @traceable
-def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output, font_name="Arial", custom_font=True):
-    pdf = FPDF()
-
-    if custom_font:
-        # Add regular and bold variants of the custom font
-        pdf.add_font(family=font_name, style="", fname="fonts/arial.ttf", uni=True)
-        pdf.add_font(family=font_name, style="B", fname="fonts/arialbd.ttf", uni=True)
-
-    pdf.set_font(font_name, size=12)  # Use the specified font
-
-    # Add header function
-    def add_header(pdf, text):
-        pdf.set_text_color(255, 165, 0)  # Set text color to orange
-        pdf.set_font(font_name, style='B', size=16)  # Set font to bold and size 16
-        pdf.cell(0, 10, text, ln=True, align='C')
-        pdf.set_text_color(0, 0, 0)  # Reset text color to black
-        pdf.set_font(font_name, size=12)  # Reset font size to 12
-
-    def add_markdown_text(pdf, text):
-        lines = text.split('\n')
-        for line in lines:
-            line = line.replace(':', '')  # Remove colons
-            line = line.replace('---', '')  # Remove '---'
-            if line.strip() == '-':
-                line = ''  # Remove lines with only a single dash
-            if not line.strip():  # Skip empty lines to reduce gap
-                continue
-
-            if line.startswith('####'):
-                pdf.set_font(font_name, style='B', size=12)
-                pdf.multi_cell(0, 5, line[4:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            elif line.startswith('###'):
-                pdf.set_font(font_name, style='B', size=14)
-                pdf.multi_cell(0, 5, line[3:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            elif line.startswith('##'):
-                pdf.set_font(font_name, style='B', size=16)
-                pdf.multi_cell(0, 5, line[2:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            elif line.startswith('#'):
-                pdf.set_font(font_name, style='B', size=18)
-                pdf.multi_cell(0, 5, line[1:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            else:
-                parts = re.split(r'(\*\*.*?\*\*)', line)
-                for part in parts:
-                    if part.startswith('**') and part.endswith('**'):
-                        pdf.set_font(font_name, style='B', size=12)
-                        pdf.multi_cell(0, 5, part[2:-2].strip(), align='L')  # Reduced line height
-                        pdf.set_font(font_name, size=12)
-                    else:
-                        pdf.multi_cell(0, 5, part.strip(), align='L')  # Reduced line height
-
-    def add_section(pdf, title, content):
-        pdf.add_page()
-        add_header(pdf, title)
-        content = format_output(content)
-        add_markdown_text(pdf, content)
-
-    # Add sections
-    add_section(pdf, "Swift Launch Report - ICP Output", icp_output)
-    add_section(pdf, "Swift Launch Report - Channels Output", channels_output)
-    add_section(pdf, "Swift Launch Report - Pains Output", pains_output)
-    add_section(pdf, "Swift Launch Report - Gains Output", gains_output)
-    add_section(pdf, "Swift Launch Report - JTBD Output", jtbd_output)
-    add_section(pdf, "Swift Launch Report - Product Design Output", propdesign_output)
-    add_section(pdf, "Swift Launch Report - Customer Journey Output", customerj_output)
-    add_section(pdf, "Swift Launch Report - Methodology Output", methodology_output)
-
-    output_filename = "Swift_Launch_Report.pdf"
-    pdf.output(output_filename)
-    logging.info(f"PDF generated: {output_filename}")
-    return output_filename
-
-
-@traceable
 def send_email_with_pdf(receiver_email, pdf_filename):
     try:
         msg = MIMEMultipart()
@@ -709,12 +626,12 @@ def send_email_with_pdf(receiver_email, pdf_filename):
         return False
 
 def main():
-    st.title("ICP and Channels Report Generator")
+    st.title("Swift Launch Report Generator")
 
     with st.form("input_form"):
         email = st.text_input("Email")
         product_service = st.text_input("Product/Service")
-        price = st.number_input("Price", min_value=0.0, format="%f")
+        price = st.number_input("Price", min_value=0, format="%f")
         currency = st.selectbox("Currency", ["USD", "EUR", "GBP"])
         payment_frequency = st.selectbox("Payment Frequency", ["One-time", "Monthly", "Yearly"])
         selling_scope = st.selectbox("Selling Scope", ["Locally", "Globally"])

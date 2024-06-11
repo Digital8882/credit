@@ -331,25 +331,28 @@ def main():
         submit_button = st.form_submit_button(label="Generate Swift Launch Report")
 
     if submit_button:
-        st.info("Checking your credits...")
-
-        credits, record_id = asyncio.run(check_credits(email))
+        with st.spinner("Checking your credits..."):
+            credits, record_id = asyncio.run(check_credits(email))
+        
         if credits > 0:
-            st.success("Credits available. Generating Swift Launch Report...")
-            icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output = asyncio.run(
-                start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits))
+            with st.spinner("Generating Swift Launch Report..."):
+                icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output = asyncio.run(
+                    start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits)
+                )
+            
             st.write("Swift Launch Report Generated")
 
-            pdf_filename = generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output)
+            pdf_filename = generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, methodology_output)
             if pdf_filename:
                 st.success("ICP and Channels report generated and saved as PDF")
 
-                if send_email_with_pdf(email, pdf_filename):
-                    st.success("Email sent successfully")
-                    new_credits = credits - 1
-                    asyncio.run(update_credits(record_id, new_credits))
-                else:
-                    st.error("Failed to send email. Please try again later.")
+                with st.spinner("Sending email with the report..."):
+                    if send_email_with_pdf(email, pdf_filename):
+                        st.success("Email sent successfully")
+                        new_credits = credits - 1
+                        asyncio.run(update_credits(record_id, new_credits))
+                    else:
+                        st.error("Failed to send email. Please try again later.")
             else:
                 st.error("PDF generation failed or exceeds size limit.")
         else:

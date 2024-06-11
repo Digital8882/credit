@@ -1,6 +1,6 @@
 import streamlit as st
-from SL_agents import researcher, product_manager, marketing_director, sales_director
-from SL_tasks import icp_task, get_channels_task_template, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task
+from SL_agents import researcher
+from SL_tasks import icp_task
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
 from crewai import Crew, Process, Task
@@ -31,7 +31,7 @@ SENDER_PASSWORD = 'Lovelife1#'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "king nipzino"
+os.environ["LANGSMITH_PROJECT"] = "king nip"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -66,7 +66,7 @@ def patched_print(*args, **kwargs):
 builtins.print = patched_print
 
 @traceable
-async def send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output):
+async def send_to_airtable(email, icp_output):
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}",
@@ -76,12 +76,6 @@ async def send_to_airtable(email, icp_output, channels_output, pains_output, gai
         "fields": {
             "Email": email,
             AIRTABLE_FIELDS['icp']: icp_output,
-            AIRTABLE_FIELDS['channels']: channels_output,
-            AIRTABLE_FIELDS['pains']: pains_output,
-            AIRTABLE_FIELDS['gains']: gains_output,
-            AIRTABLE_FIELDS['jtbd']: jtbd_output,
-            AIRTABLE_FIELDS['propdesign']: propdesign_output,
-            AIRTABLE_FIELDS['customerj']: customerj_output,
         }
     }
     async with httpx.AsyncClient() as client:
@@ -105,12 +99,6 @@ async def retrieve_from_airtable(record_id):
         logging.info("Data retrieved from Airtable successfully")
         return (
             fields.get(AIRTABLE_FIELDS['icp'], ''),
-            fields.get(AIRTABLE_FIELDS['channels'], ''),
-            fields.get(AIRTABLE_FIELDS['pains'], ''),
-            fields.get(AIRTABLE_FIELDS['gains'], ''),
-            fields.get(AIRTABLE_FIELDS['jtbd'], ''),
-            fields.get(AIRTABLE_FIELDS['propdesign'], ''),
-            fields.get(AIRTABLE_FIELDS['customerj'], ''),
         )
 
 @traceable
@@ -185,6 +173,7 @@ def generate_pdf(result):
 @traceable
 def send_email(receiver_email, result):
     try:
+        logging.info("Generating PDF content")
         pdf_content = generate_pdf(result)
         
         # Email details
@@ -229,13 +218,11 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
 
     new_task = Task(description=task_description, expected_output="...")
 
-    channels_task = get_channels_task_template(marketing_channels)
-
     project_crew = Crew(
-        tasks=[new_task, icp_task, channels_task, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task],
-        agents=[researcher, product_manager, marketing_director, sales_director],
-        manager_llm=ChatOpenAI(temperature=0.2, model="gpt-4o"),
-        max_rpm=5,
+        tasks=[new_task, icp_task],
+        agents=[researcher],
+        manager_llm=ChatOpenAI(temperature=0, model="gpt-4o"),
+        max_rpm=4,
         process=Process.hierarchical,
     )
 
@@ -244,14 +231,8 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
             logging.info(f"Starting crew process, attempt {attempt + 1}")
             results = project_crew.kickoff()
             icp_output = icp_task.output.exported_output if hasattr(icp_task.output, 'exported_output') else "No ICP output"
-            channels_output = channels_task.output.exported_output if hasattr(channels_task.output, 'exported_output') else "No Channels output"
-            pains_output = pains_task.output.exported_output if hasattr(pains_task.output, 'exported_output') else "No Pains output"
-            gains_output = gains_task.output.exported_output if hasattr(gains_task.output, 'exported_output') else "No Gains output"
-            jtbd_output = jtbd_task.output.exported_output if hasattr(jtbd_task.output, 'exported_output') else "No JTBD output"
-            propdesign_output = propdesign_task.output.exported_output if hasattr(propdesign_task.output, 'exported_output') else "No Product Design output"
-            customerj_output = customerj_task.output.exported_output if hasattr(customerj_task.output, 'exported_output') else "No Customer Journey output"
             logging.info("Crew process completed successfully")
-            return icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output,
+            return icp_output,
         except BrokenPipeError as e:
             logging.error(f"BrokenPipeError occurred on attempt {attempt + 1}: {e}")
             logging.debug(traceback.format_exc())
@@ -265,7 +246,7 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
             raise
 
 def main():
-    st.title("ICP and Channels Report Generator")
+    st.title("ICP Report Generator")
 
     with st.form("input_form"):
         email = st.text_input("Email")
@@ -291,7 +272,7 @@ def main():
         
         if credits > 0:
             with st.spinner("Generating Swift Launch Report..."):
-                icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output = asyncio.run(
+                icp_output, = asyncio.run(
                     start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits)
                 )
             
@@ -299,12 +280,6 @@ def main():
 
             result = {
                 'ICP Output': icp_output,
-                'Channels Output': channels_output,
-                'Pains Output': pains_output,
-                'Gains Output': gains_output,
-                'JTBD Output': jtbd_output,
-                'Product Design Output': propdesign_output,
-                'Customer Journey Output': customerj_output
             }
 
             with st.spinner("Sending email with the report..."):

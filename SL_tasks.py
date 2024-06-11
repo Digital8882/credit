@@ -147,7 +147,7 @@ jtbd_task = Task(
         - Simulate the customer's responses based on your understanding of their profile and the market
         - Synthesize the findings into a clear and concise report that highlights the key JTBD and actionable recommendations
         The simulated interview and report should be written in a professional, analytical tone, ensuring clarity and accessibility necessary for understanding by team members across different functions.""",
-    expected_output="""Create a Jobs to Be Done (JTBD) report based on the simulated interview with the ideal customer profile. The report should be approximately 1000 words in markdown and include:
+    expected_output="""Create a Jobs to Be Done (JTBD) report based on the simulated interview with the ideal customer profile. The report should be approximately 1000 words and include:
         - An explanation of what JTBD are and why it is essential to identify them
         - At least 8 JTBD identified through the simulated interview, each described in detail, 4-5 of these should be related to the product or service and the rest can be outside the scope of the offering but are still important to the customer
         - A prioritized list of the identified JTBD based on their importance and impact on the customer's decision-making process, including the reasoning behind the prioritization
@@ -200,7 +200,7 @@ propdesign_task = Task(
         - Discuss how the new product or service can create synergies with product and improve the overall customer experience
         5. Support your analysis and recommendations with data and metrics, such as customer satisfaction scores, adoption rates, or revenue projections    
         The product proposal should be written in a professional, persuasive tone, demonstrating a deep understanding of the target customers and market dynamics.""",
-    expected_output="""in markdown combine narrative and expository writing styles, Create a product proposal document that includes the following sections:
+    expected_output=""" combine narrative and expository writing styles, Create a product proposal document that includes the following sections:
         1. Executive Summary
         - Brief overview of the current state of product
         - Summary of the proposed improvements and new product/service recommendation
@@ -287,11 +287,13 @@ customerj_task = Task(
 )
 
 methodology_task = Task(
-    description="""You are required to explain the methodology used to gather insights and findings during the interviews. This should encompass the processes and strategies used to select participants, design the interview questions, conduct the interviews, and analyze the collected data..""",
+    description="""You are required to detail the methodology used to gather insights and findings from interviews with AI agents engaged in role-playing scenarios to create synthetic data. This should encompass the processes and strategies for selecting AI agents, designing interview questions, conducting the interviews, and analyzing the collected data, with a focus on ensuring the reliability and validity of the synthetic data produced.""",
     expected_output="""Provide a comprehensive methodology section in the report that includes the following elements:
-        Participant Selection: Describe the criteria and process used to select interview participants, ensuring they represent the target market.
-        Interview Design: Explain how the interview questions were crafted to uncover insights about product usability, willingness to pay, switching barriers, customer acquisition channels, feedback on competitors, and market trends.
-        Interview Process: Detail the steps taken to conduct the interviews, including the medium used (e.g., in-person, online, phone), duration, and any protocols followed to ensure consistency and reliability.
-        Data Analysis: Outline the methods used to analyze the interview data, including how direct quotes, paraphrased viewpoints, and your analysis were synthesized to identify key insights and trends.
-        Ethical Considerations: Mention any ethical guidelines followed, such as informed consent and confidentiality measures, to protect the participants' privacy and integrity of the data.."""
+        Participant Selection: Describe the criteria and process used to select AI agents for the interviews, ensuring they effectively represent the target personas and scenarios required for generating reliable synthetic data.
+        Interview Design: Explain how the interview questions were crafted to simulate real-world scenarios and uncover valuable insights about product usability, willingness to pay, switching barriers, customer acquisition channels, feedback on competitors, and market trends.
+        Interview Process: Detail the steps taken to conduct the interviews, including the medium used (e.g., virtual environments, simulation platforms), duration, and protocols followed to ensure consistency, reliability, and replicability of the interactions.
+        Data Analysis: Outline the methods used to analyze the interview data, including how direct quotes, paraphrased viewpoints, and synthesized analyses were used to identify key insights and trends. Emphasize the techniques used to validate and verify the accuracy of the synthetic data against real-world benchmarks.
+        Ethical Considerations: Mention any ethical guidelines followed, such as ensuring the responsible use of AI, maintaining data integrity, and adhering to confidentiality measures, to protect the integrity of the synthetic data and the AI agents involved in the process."""
 )
+
+

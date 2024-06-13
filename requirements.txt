@@ -20,3 +20,4 @@ markdown
 httpx
 markdown2
 flask
+gunicorn

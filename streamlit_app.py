@@ -3,9 +3,9 @@ import requests
 import os
 
 # Set the backend URL directly
-backend_url = "https://stripe-1-esqs.onrender.com"
+backend_url = "https://credit-t9kr.onrender.com"
 
-st.title("ICP and Channels Report Generator")
+st.title("Swift Launch Report Generator")
 
 with st.form("input_form"):
     email = st.text_input("Email")

@@ -1,12 +1,10 @@
 import streamlit as st
 import requests
-import os
+import asyncio
 
+API_URL = "https://credit-t9kr.onrender.com"
 
-# Set the backend URL directly
-backend_url = "https://credit-t9kr.onrender.com"
-
-st.title("ICP and Channels Report Generator")
+st.title("ICP Report Generator")
 
 with st.form("input_form"):
     email = st.text_input("Email")
@@ -16,47 +14,44 @@ with st.form("input_form"):
     payment_frequency = st.selectbox("Payment Frequency", ["One-time", "Monthly", "Yearly"])
     selling_scope = st.selectbox("Selling Scope", ["Locally", "Globally"])
     location = st.text_input("Location", disabled=(selling_scope == "Globally"))
-
-    marketing_channels = st.multiselect("Marketing Channels", ["Facebook", "Twitter (x)", "Instagram", "Reddit", "TikTok", "SEO", "Blog", "PPC", "LinkedIn"])
-
+    marketing_channels = st.multiselect("Marketing Channels", ["Facebook", "Twitter (X)", "Instagram", "Reddit", "TikTok", "SEO", "Blog", "PPC", "LinkedIn"])
     features = st.text_area("Features", help="Enter the features of your product/service")
     benefits = st.text_area("Benefits", help="Enter the benefits of your product/service")
-
     submit_button = st.form_submit_button(label="Generate Swift Launch Report")
 
 if submit_button:
-    st.info("Sending request to generate your report...")
-    payload = {
-        "email": email,
-        "product_service": product_service,
-        "price": price,
-        "currency": currency,
-        "payment_frequency": payment_frequency,
-        "selling_scope": selling_scope,
-        "location": location,
-        "marketing_channels": marketing_channels,
-        "features": features,
-        "benefits": benefits
-    }
-
-    try:
-        response = requests.post(f'{backend_url}/generate_report', json=payload)
-        response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
+    with st.spinner("Checking your credits..."):
+        response = requests.post(f"{API_URL}/check_credits", json={'email': email})
+        credits_info = response.json()
+    
+    if credits_info['credits'] > 0:
+        with st.spinner("Generating Swift Launch Report..."):
+            response = requests.post(f"{API_URL}/start_process", json={
+                'email': email,
+                'product_service': product_service,
+                'price': price,
+                'currency': currency,
+                'payment_frequency': payment_frequency,
+                'selling_scope': selling_scope,
+                'location': location,
+                'marketing_channels': marketing_channels,
+                'features': features,
+                'benefits': benefits
+            })
+            result = response.json()
         
-        try:
-            response_data = response.json()
-        except ValueError:
-            st.error("Failed to parse response as JSON")
-            st.write("Response text:", response.text)
-            response_data = None
-        
-        if response_data:
-            st.write(f"Response status code: {response.status_code}")
-            st.write(f"Response content: {response_data}")
+        st.write("Swift Launch Report Generated")
+        st.json(result)
 
+        new_credits = credits_info['credits'] - 1
+        with st.spinner("Updating your credits..."):
+            response = requests.post(f"{API_URL}/update_credits", json={
+                'record_id': credits_info['record_id'],
+                'new_credits': new_credits
+            })
             if response.status_code == 200:
-                st.success("Report generated and email sent successfully!")
+                st.success("Credits updated successfully")
             else:
-                st.error(f"Failed to generate report: {response_data.get('message')}")
-    except requests.exceptions.RequestException as e:
-        st.error(f"Request failed: {e}")
+                st.error("Failed to update credits")
+    else:
+        st.error("No credits available. Please purchase more credits to generate the Swift Launch Report.")

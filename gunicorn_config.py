@@ -1,7 +1,8 @@
 # gunicorn_config.py
+import multiprocessing
 
 # Number of worker processes
-workers = 1
+workers = multiprocessing.cpu_count() * 2 + 1  # Typically (2 x $num_cores) + 1
 
 # The timeout in seconds for requests
 timeout = 120

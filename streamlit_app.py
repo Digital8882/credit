@@ -1,7 +1,10 @@
 import streamlit as st
 import requests
+import os
 
-# Streamlit frontend
+# Set the backend URL directly
+backend_url = "https://stripe-1-esqs.onrender.com"
+
 st.title("ICP and Channels Report Generator")
 
 with st.form("input_form"):
@@ -35,7 +38,7 @@ if submit_button:
         "benefits": benefits
     }
 
-    response = requests.post('https://<your-backend-service-url>/generate_report', json=payload)
+    response = requests.post(f'{backend_url}/generate_report', json=payload)
 
     if response.status_code == 200:
         st.success("Report generated and email sent successfully!")

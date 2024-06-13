@@ -48,7 +48,7 @@ RECEIVER_EMAIL = 'yourorder@swiftlaunch.biz'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "King Eohe"
+os.environ["LANGSMITH_PROJECT"] = "King Eohdfdse"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -373,7 +373,8 @@ def send_email_with_pdf(pdf_filename):
         return False
 
 
-def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits, retries=3):
+@traceable
+async def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits, retries=3):
     task_description = f"New task from {email} selling {product_service} at {price} {currency} with payment frequency {payment_frequency}."
     if selling_scope == "Locally":
         task_description += f" Location: {location}."
@@ -381,42 +382,35 @@ def start_crew_process(email, product_service, price, currency, payment_frequenc
 
     new_task = Task(description=task_description, expected_output="...")
 
-    channels_task = get_channels_task_template(marketing_channels)
-
     project_crew = Crew(
-        tasks=[new_task, icp_task, channels_task, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task],
+        tasks=[new_task, icp_task],
         agents=[researcher, product_manager, marketing_director, sales_director],
         manager_llm=ChatOpenAI(temperature=0, model="gpt-4o"),
-        max_rpm=6,
+        max_rpm=4,
         process=Process.hierarchical,
-        memory=True,
     )
 
     for attempt in range(retries):
         try:
             logging.info(f"Starting crew process, attempt {attempt + 1}")
-            results = project_crew.kickoff()
-
+            results = await asyncio.wait_for(project_crew.kickoff(), timeout=110)
             icp_output = icp_task.output.exported_output if hasattr(icp_task.output, 'exported_output') else "No ICP output"
-            channels_output = channels_task.output.exported_output if hasattr(channels_task.output, 'exported_output') else "No Channels output"
-            pains_output = pains_task.output.exported_output if hasattr(pains_task.output, 'exported_output') else "No Pains output"
-            gains_output = gains_task.output.exported_output if hasattr(gains_task.output, 'exported_output') else "No Gains output"
-            jtbd_output = jtbd_task.output.exported_output if hasattr(jtbd_task.output, 'exported_output') else "No JTBD output"
-            propdesign_output = propdesign_task.output.exported_output if hasattr(propdesign_task.output, 'exported_output') else "No Product Design output"
-            customerj_output = customerj_task.output.exported_output if hasattr(customerj_task.output, 'exported_output') else "No Customer Journey output"
-            
             logging.info("Crew process completed successfully")
-            return icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output
+            return icp_output,
+        except asyncio.TimeoutError:
+            logging.error(f"TimeoutError on attempt {attempt + 1}")
+            if attempt < retries - 1:
+                await asyncio.sleep(2 ** attempt)
+            else:
+                raise
         except BrokenPipeError as e:
             logging.error(f"BrokenPipeError occurred on attempt {attempt + 1}: {e}")
-            logging.debug(traceback.format_exc())
             if attempt < retries - 1:
-                time.sleep(2 ** attempt)
+                await asyncio.sleep(2 ** attempt)
             else:
                 raise
         except Exception as e:
             logging.error(f"An error occurred during the crew process: {e}")
-            logging.debug(traceback.format_exc())
             raise
 
 @app.route('/generate_report', methods=['POST'])

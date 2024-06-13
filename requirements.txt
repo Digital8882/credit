@@ -7,4 +7,5 @@ crew-ai
 httpx
 reportlab
 markdown
-gunicord
+gunicorn
+memory-profiler

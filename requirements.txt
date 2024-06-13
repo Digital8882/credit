@@ -15,6 +15,7 @@ python-dotenv
 airtable-python-wrapper
 pandas
 langsmith
-fpdf
+reportlab
+markdown
 httpx
 markdown2

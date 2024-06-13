@@ -7,7 +7,7 @@ from SL_agents import researcher, product_manager, marketing_director, sales_dir
 from SL_tasks import icp_task, get_channels_task_template, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
-from crewai import Crew, Process, Task, Agent
+from crewai import Crew, Process, Task
 
 app = Flask(__name__)
 
@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "Final E"
+os.environ["LANGSMITH_PROJECT"] = "kip"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 

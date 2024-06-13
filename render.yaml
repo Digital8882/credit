@@ -19,4 +19,4 @@ services:
     startCommand: "streamlit run streamlit_app.py --server.port $PORT"
     envVars:
       - key: BACKEND_URL
-        value: https://swift-launch-backend.onrender.com
+        value: https://stripe-1-esqs.onrender.com

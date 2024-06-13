@@ -1,3 +1,4 @@
+from flask import Flask, request, jsonify
 import streamlit as st
 from SL_agents import researcher, product_manager, marketing_director, sales_director
 from SL_tasks import icp_task, get_channels_task_template, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task
@@ -18,6 +19,8 @@ import builtins
 import re
 import asyncio
 import httpx
+
+app = Flask(__name__)
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -347,51 +350,43 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
             logging.debug(traceback.format_exc())
             raise
 
-def main():
-    st.title("ICP and Channels Report Generator")
+@app.route('/generate_report', methods=['POST'])
+def generate_report():
+    data = request.json
+    email = data.get("email")
+    product_service = data.get("product_service")
+    price = data.get("price")
+    currency = data.get("currency")
+    payment_frequency = data.get("payment_frequency")
+    selling_scope = data.get("selling_scope")
+    location = data.get("location")
+    marketing_channels = data.get("marketing_channels")
+    features = data.get("features")
+    benefits = data.get("benefits")
 
-    with st.form("input_form"):
-        email = st.text_input("Email")
-        product_service = st.text_input("Product/Service")
-        price = st.number_input("Price", min_value=0.0, format="%f")
-        currency = st.selectbox("Currency", ["USD", "EUR", "GBP"])
-        payment_frequency = st.selectbox("Payment Frequency", ["One-time", "Monthly", "Yearly"])
-        selling_scope = st.selectbox("Selling Scope", ["Locally", "Globally"])
-        location = st.text_input("Location", disabled=(selling_scope == "Globally"))
-
-        marketing_channels = st.multiselect("Marketing Channels", ["Facebook", "Twitter (x)", "Instagram", "Reddit", "TikTok", "SEO", "Blog", "PPC", "LinkedIn"])
-
-        features = st.text_area("Features", help="Enter the features of your product/service")
-        benefits = st.text_area("Benefits", help="Enter the benefits of your product/service")
-
-        submit_button = st.form_submit_button(label="Generate Swift Launch Report")
-
-    if submit_button:
-        st.info("Checking your credits...")
-
-        credits, record_id = asyncio.run(check_credits(email))
+    async def process_request():
+        credits, record_id = await check_credits(email)
         if credits > 0:
-            st.success("Credits available. Generating Swift Launch Report...")
-            icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output = asyncio.run(
-                start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits))
-            st.write("Swift Launch Report Generated")
-
-            asyncio.run(send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output))
-            retrieved_outputs = asyncio.run(retrieve_from_airtable(email))
+            icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output = await start_crew_process(
+                email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits)
+            
+            await send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output)
+            retrieved_outputs = await retrieve_from_airtable(email)
             pdf_filename = generate_pdf(*retrieved_outputs)
             if pdf_filename:
-                st.success("ICP and Channels report generated and saved as PDF")
-
                 if send_email_with_pdf(pdf_filename):
-                    st.success("Email sent successfully")
                     new_credits = credits - 1
-                    asyncio.run(update_credits(record_id, new_credits))
+                    await update_credits(record_id, new_credits)
+                    return jsonify({"status": "success", "message": "Report generated and email sent successfully"}), 200
                 else:
-                    st.error("Failed to send email. Please try again later.")
+                    return jsonify({"status": "error", "message": "Failed to send email"}), 500
             else:
-                st.error("PDF generation failed or exceeds size limit.")
+                return jsonify({"status": "error", "message": "PDF generation failed or exceeds size limit"}), 500
         else:
-            st.error("No credits available. Please purchase more credits to generate the Swift Launch Report.")
+            return jsonify({"status": "error", "message": "No credits available"}), 400
+    
+    result = asyncio.run(process_request())
+    return result
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    app.run(debug=True)

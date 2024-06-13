@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import os
+from memory_profiler import profile
 
 # Set the backend URL directly
 backend_url = "https://credit-t9kr.onrender.com"

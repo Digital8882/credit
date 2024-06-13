@@ -3,8 +3,8 @@ import asyncio
 import httpx
 import os
 import logging
-from SL_agents import researcher
-from SL_tasks import icp_task
+from SL_agents import researcher, product_manager, marketing_director, sales_director
+from SL_tasks import icp_task, get_channels_task_template, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
 from crewai import Crew, Process, Task

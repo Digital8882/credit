@@ -13,6 +13,8 @@ import builtins
 import re
 import httpx
 import markdown
+from memory_profiler import profile
+import logging
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem

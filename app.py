@@ -48,7 +48,7 @@ RECEIVER_EMAIL = 'yourorder@swiftlaunch.biz'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "King E"
+os.environ["LANGSMITH_PROJECT"] = "King Ek"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 

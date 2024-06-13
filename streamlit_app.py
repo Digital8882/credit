@@ -1,5 +1,3 @@
-from memory_profiler import profile
-import logging
 import streamlit as st
 import requests
 import os

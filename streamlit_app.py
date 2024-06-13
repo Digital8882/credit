@@ -4,7 +4,7 @@ import asyncio
 
 API_URL = "https://credit-t9kr.onrender.com"
 
-st.title("ICP Report Generator")
+st.title("Swift Launch Generator")
 
 with st.form("input_form"):
     email = st.text_input("Email")

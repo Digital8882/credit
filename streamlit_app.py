@@ -4,7 +4,6 @@ from SL_tasks import icp_task, get_channels_task_template, pains_task, gains_tas
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
 from crewai import Crew, Process, Task
-from fpdf import FPDF
 import os
 import smtplib
 import logging
@@ -24,14 +23,15 @@ import httpx
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Email configuration
-SMTP_SERVER = 'smtp-mail.outlook.com'
+SMTP_SERVER = 'mail.privateemail.com'
 SMTP_PORT = 587
-SENDER_EMAIL = 'info@swiftlaunch.biz'
+SENDER_EMAIL = 'yourorder@swiftlaunch.biz'
 SENDER_PASSWORD = 'Lovelife1#'
+RECEIVER_EMAIL = 'yourorder@swiftlaunch.biz'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "k nipsey russle"
+os.environ["LANGSMITH_PROJECT"] = "King E"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -221,77 +221,37 @@ def format_output(output):
     return output.strip()
 
 @traceable
-def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output, font_name="Arial", custom_font=True):
-    pdf = FPDF()
+def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output):
+    # Combine all task outputs into a single markdown string
+    combined_content = f"""
+## ICP Output
+{icp_output}
 
-    if custom_font:
-        # Add regular and bold variants of the custom font
-        pdf.add_font(family=font_name, style="", fname="fonts/arial.ttf", uni=True)
-        pdf.add_font(family=font_name, style="B", fname="fonts/arialbd.ttf", uni=True)
+## Channels Output
+{channels_output}
 
-    pdf.set_font(font_name, size=12)  # Use the specified font
+## Pains Output
+{pains_output}
 
-    # Add header function
-    def add_header(pdf, text):
-        pdf.set_text_color(255, 165, 0)  # Set text color to orange
-        pdf.set_font(font_name, style='B', size=16)  # Set font to bold and size 16
-        pdf.cell(0, 10, text, ln=True, align='C')
-        pdf.set_text_color(0, 0, 0)  # Reset text color to black
-        pdf.set_font(font_name, size=12)  # Reset font size to 12
+## Gains Output
+{gains_output}
 
-    def add_markdown_text(pdf, text):
-        lines = text.split('\n')
-        for line in lines:
-            line = line.replace(':', '')  # Remove colons
-            line = line.replace('---', '')  # Remove '---'
-            if line.strip() == '-':
-                line = ''  # Remove lines with only a single dash
-            if not line.strip():  # Skip empty lines to reduce gap
-                continue
+## JTBD Output
+{jtbd_output}
 
-            if line.startswith('####'):
-                pdf.set_font(font_name, style='B', size=12)
-                pdf.multi_cell(0, 5, line[4:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            elif line.startswith('###'):
-                pdf.set_font(font_name, style='B', size=14)
-                pdf.multi_cell(0, 5, line[3:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            elif line.startswith('##'):
-                pdf.set_font(font_name, style='B', size=16)
-                pdf.multi_cell(0, 5, line[2:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            elif line.startswith('#'):
-                pdf.set_font(font_name, style='B', size=18)
-                pdf.multi_cell(0, 5, line[1:].strip(), align='L')  # Reduced line height
-                pdf.set_font(font_name, size=12)
-            else:
-                parts = re.split(r'(\*\*.*?\*\*)', line)
-                for part in parts:
-                    if part.startswith('**') and part.endswith('**'):
-                        pdf.set_font(font_name, style='B', size=12)
-                        pdf.multi_cell(0, 5, part[2:-2].strip(), align='L')  # Reduced line height
-                        pdf.set_font(font_name, size=12)
-                    else:
-                        pdf.multi_cell(0, 5, part.strip(), align='L')  # Reduced line height
+## Product Design Output
+{propdesign_output}
 
-    def add_section(pdf, title, content):
-        pdf.add_page()
-        add_header(pdf, title)
-        content = format_output(content)
-        add_markdown_text(pdf, content)
+## Customer Journey Output
+{customerj_output}
+    """
+    
+    # Convert the combined content to HTML
+    html_content = markdown.markdown(combined_content)
 
-    # Add sections
-    add_section(pdf, "Swift Launch Report - ICP Output", icp_output)
-    add_section(pdf, "Swift Launch Report - Channels Output", channels_output)
-    add_section(pdf, "Swift Launch Report - Pains Output", pains_output)
-    add_section(pdf, "Swift Launch Report - Gains Output", gains_output)
-    add_section(pdf, "Swift Launch Report - JTBD Output", jtbd_output)
-    add_section(pdf, "Swift Launch Report - Product Design Output", propdesign_output)
-    add_section(pdf, "Swift Launch Report - Customer Journey Output", customerj_output)
-
+    # Create the PDF file
     output_filename = "Swift_Launch_Report.pdf"
-    pdf.output(output_filename)
+    create_pdf(html_content, output_filename)
     logging.info(f"PDF generated: {output_filename}")
 
     # Check file size
@@ -304,17 +264,17 @@ def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_o
     return output_filename
 
 @traceable
-def send_email_with_pdf(receiver_email, pdf_filename):
+def send_email_with_pdf(pdf_filename):
     try:
         if not pdf_filename or not os.path.exists(pdf_filename):
             logging.error(f"File not found or exceeds size limit: {pdf_filename}")
             return False
 
-        logging.info(f"Preparing to send email to {receiver_email} with attachment {pdf_filename}")
+        logging.info(f"Preparing to send email to {RECEIVER_EMAIL} with attachment {pdf_filename}")
 
         msg = MIMEMultipart()
         msg['From'] = SENDER_EMAIL
-        msg['To'] = receiver_email
+        msg['To'] = RECEIVER_EMAIL
         msg['Subject'] = 'Your Swift Launch Report'
         body = 'Please find attached your Swift Launch Report.'
         msg.attach(MIMEText(body, 'plain'))
@@ -333,9 +293,9 @@ def send_email_with_pdf(receiver_email, pdf_filename):
 
         logging.info("Sending email")
         text = msg.as_string()
-        server.sendmail(SENDER_EMAIL, receiver_email, text)
+        server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, text)
         server.quit()
-        logging.info(f"Email sent to {receiver_email} with attachment {pdf_filename}")
+        logging.info(f"Email sent to {RECEIVER_EMAIL} with attachment {pdf_filename}")
         return True
     except Exception as e:
         logging.error(f"Failed to send email: {str(e)}")
@@ -399,10 +359,8 @@ def main():
         selling_scope = st.selectbox("Selling Scope", ["Locally", "Globally"])
         location = st.text_input("Location", disabled=(selling_scope == "Globally"))
 
-        # Add multi-select for marketing channels
         marketing_channels = st.multiselect("Marketing Channels", ["Facebook", "Twitter (x)", "Instagram", "Reddit", "TikTok", "SEO", "Blog", "PPC", "LinkedIn"])
 
-        # Add new input fields for Features and Benefits
         features = st.text_area("Features", help="Enter the features of your product/service")
         benefits = st.text_area("Benefits", help="Enter the benefits of your product/service")
 
@@ -424,7 +382,7 @@ def main():
             if pdf_filename:
                 st.success("ICP and Channels report generated and saved as PDF")
 
-                if send_email_with_pdf(email, pdf_filename):
+                if send_email_with_pdf(pdf_filename):
                     st.success("Email sent successfully")
                     new_credits = credits - 1
                     asyncio.run(update_credits(record_id, new_credits))

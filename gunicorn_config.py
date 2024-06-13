@@ -1,8 +1,5 @@
 # gunicorn_config.py
-import multiprocessing
-
-# Number of worker processes
-workers = 2  # Adjust based on your monitoring
+workers = 1
 
 # The timeout in seconds for requests
 timeout = 120
@@ -10,8 +7,8 @@ timeout = 120
 # Number of worker connections
 worker_connections = 1000
 
-# Log level (change from 'debug' to 'info' or 'warning')
-loglevel = 'info'  # Options: 'debug', 'info', 'warning', 'error', 'critical'
+# Log level
+loglevel = 'debug'
 
 # Enable or disable the use of the HTTP Keep-Alive feature
 keepalive = 2

@@ -1,22 +1,22 @@
 services:
   - type: web
-    name: flask-backend
+    name: swift-launch-backend
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
-    envVars:
-      - key: FLASK_ENV
-        value: production
     plan: starter
-    region: frankfurt
-    healthCheckPath: /
-    autoDeploy: true
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: AIRTABLE_API_KEY
+        value: ${AIRTABLE_API_KEY}
+      - key: SMTP_PASSWORD
+        value: ${SMTP_PASSWORD}
 
   - type: web
-    name: streamlit-frontend
+    name: swift-launch-frontend
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run streamlit_app.py --server.port $PORT --server.enableCORS false
     plan: free
-    region: frankfurt
-    autoDeploy: true
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "streamlit run streamlit_app.py --server.port $PORT"
+    envVars:
+      - key: BACKEND_URL
+        value: https://credit-t9kr.onrender.com

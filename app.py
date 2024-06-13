@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "king ek"
+os.environ["LANGSMITH_PROJECT"] = "Final E"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -102,7 +102,7 @@ async def start_crew_process(email, product_service, price, currency, payment_fr
 
     project_crew = Crew(
         tasks=[new_task, icp_task],
-        agents=[researcher],
+        agents=[researcher, product_manager, marketing_director, sales_director],
         manager_llm=ChatOpenAI(temperature=0, model="gpt-4o"),
         max_rpm=4,
         process=Process.hierarchical,

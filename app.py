@@ -27,6 +27,15 @@ from crewai import Crew, Process, Task
 
 app = Flask(__name__)
 
+@app.route('/')
+def index():
+    return "Welcome to Swift Launch Backend API"
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -39,7 +48,7 @@ RECEIVER_EMAIL = 'yourorder@swiftlaunch.biz'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "k nipsey russle"
+os.environ["LANGSMITH_PROJECT"] = "King E"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 

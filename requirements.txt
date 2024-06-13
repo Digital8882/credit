@@ -7,3 +7,4 @@ langchain_openai
 langsmith
 crewai
 requests
+markdown

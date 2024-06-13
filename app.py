@@ -4,7 +4,6 @@ from SL_tasks import icp_task, get_channels_task_template, pains_task, gains_tas
 from langchain_openai import ChatOpenAI
 from langsmith import traceable
 from crewai import Crew, Process, Task
-from fpdf import FPDF
 import os
 import smtplib
 import logging
@@ -18,6 +17,11 @@ import traceback
 import builtins
 import re
 import httpx
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem
+from reportlab.lib.enums import TA_JUSTIFY
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -353,8 +357,11 @@ def main():
 
             send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output)
             retrieved_outputs = retrieve_from_airtable(email)
-            pdf_filename = generate_pdf(*retrieved_outputs)
-            if pdf_filename:
+            pdf_buffer = generate_pdf(*retrieved_outputs)
+            pdf_filename = "Swift_Launch_Report.pdf"
+            with open(pdf_filename, "wb") as f:
+                f.write(pdf_buffer.getbuffer())
+            if pdf_buffer:
                 st.success("ICP and Channels report generated and saved as PDF")
 
                 if send_email_with_pdf(email, pdf_filename):

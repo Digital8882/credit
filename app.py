@@ -1,10 +1,4 @@
 from flask import Flask, request, jsonify
-import streamlit as st
-from SL_agents import researcher, product_manager, marketing_director, sales_director
-from SL_tasks import icp_task, get_channels_task_template, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task
-from langchain_openai import ChatOpenAI
-from langsmith import traceable
-from crewai import Crew, Process, Task
 import os
 import smtplib
 import logging
@@ -17,8 +11,19 @@ import time
 import traceback
 import builtins
 import re
-import asyncio
 import httpx
+import markdown
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem
+from reportlab.lib.enums import TA_JUSTIFY
+
+# Import your custom modules
+from SL_agents import researcher, product_manager, marketing_director, sales_director
+from SL_tasks import icp_task, get_channels_task_template, pains_task, gains_task, jtbd_task, propdesign_task, customerj_task
+from langchain_openai import ChatOpenAI
+from langsmith import traceable
+from crewai import Crew, Process, Task
 
 app = Flask(__name__)
 
@@ -34,7 +39,7 @@ RECEIVER_EMAIL = 'yourorder@swiftlaunch.biz'
 
 # Environment variables for Langsmith
 os.environ["LANGSMITH_TRACING_V2"] = "true"
-os.environ["LANGSMITH_PROJECT"] = "King E"
+os.environ["LANGSMITH_PROJECT"] = "k nipsey russle"
 os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
 os.environ["LANGSMITH_API_KEY"] = "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"
 
@@ -77,7 +82,7 @@ def chunk_text(text, chunk_size):
     return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
 
 @traceable
-async def send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output):
+def send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output):
     chunks = {
         'icp': chunk_text(icp_output, CHUNK_SIZE),
         'channels': chunk_text(channels_output, CHUNK_SIZE),
@@ -100,23 +105,23 @@ async def send_to_airtable(email, icp_output, channels_output, pains_output, gai
             if field_name in AIRTABLE_FIELDS:
                 data["fields"][AIRTABLE_FIELDS[field_name]] = chunk
 
-    await store_chunk_in_airtable(data)
+    store_chunk_in_airtable(data)
 
-async def store_chunk_in_airtable(data):
+def store_chunk_in_airtable(data):
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}",
         "Content-Type": "application/json"
     }
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, headers=headers, json=data)
+    with httpx.Client() as client:
+        response = client.post(url, headers=headers, json=data)
         response.raise_for_status()
         record = response.json()
         logging.info(f"Airtable chunk response: {record}")
         return record['id']
 
 @traceable
-async def retrieve_from_airtable(email):
+def retrieve_from_airtable(email):
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}"
@@ -125,8 +130,8 @@ async def retrieve_from_airtable(email):
         "filterByFormula": f"{{{AIRTABLE_FIELDS['email']}}}='{email}'"
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers, params=params)
+    with httpx.Client() as client:
+        response = client.get(url, headers=headers, params=params)
         response.raise_for_status()
         records = response.json().get('records', [])
 
@@ -164,7 +169,7 @@ async def retrieve_from_airtable(email):
         )
 
 @traceable
-async def check_credits(email):
+def check_credits(email):
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}"
@@ -173,10 +178,10 @@ async def check_credits(email):
         "filterByFormula": f"{{{AIRTABLE_FIELDS['email']}}}='{email}'"
     }
 
-    async with httpx.AsyncClient() as client:
+    with httpx.Client() as client:
         try:
             logging.info(f"Sending GET request to {url} with params {params}")
-            response = await client.get(url, headers=headers, params=params)
+            response = client.get(url, headers=headers, params=params)
             logging.info(f"HTTP Request: GET {response.url} {response.status_code} {response.reason_phrase}")
             response.raise_for_status()
             logging.debug(f"Response JSON: {response.json()}")
@@ -201,7 +206,7 @@ async def check_credits(email):
             logging.error(f"An error occurred: {str(e)}")
 
 @traceable
-async def update_credits(record_id, new_credits):
+def update_credits(record_id, new_credits):
     url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}/{record_id}"
     headers = {
         "Authorization": f"Bearer {AIRTABLE_API_KEY}",
@@ -212,8 +217,8 @@ async def update_credits(record_id, new_credits):
             AIRTABLE_FIELDS['credits']: new_credits
         }
     }
-    async with httpx.AsyncClient() as client:
-        response = await client.patch(url, headers=headers, json=data)
+    with httpx.Client() as client:
+        response = client.patch(url, headers=headers, json=data)
         response.raise_for_status()
         record = response.json()
         logging.info(f"Airtable update response: {record}")
@@ -222,6 +227,59 @@ async def update_credits(record_id, new_credits):
 @traceable
 def format_output(output):
     return output.strip()
+
+@traceable
+def create_pdf(content, filename):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY, spaceAfter=3.6))  # Reduce spacing by 50%
+    styles.add(ParagraphStyle(name='Bold', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=13.2))  # Increase font size by 10%
+    styles['Normal'].fontSize = 13.2  # Increase font size by 10%
+
+    elements = []
+
+    # Add header
+    header = Paragraph("<para align=right><font color='orange' size=12>Swift Launch Report</font></para>", styles['Normal'])
+    elements.append(header)
+    elements.append(Spacer(1, 18))  # Small spacer after the header
+
+    # Split content into lines
+    lines = content.split('\n')
+
+    for line in lines:
+        line = line.strip()
+        if line.startswith('## '):
+            elements.append(Spacer(1, 13.5))  # Increase space above headers by 50%
+            elements.append(Paragraph(line[3:], styles['Bold']))  # Bold and underline headers
+            elements.append(Spacer(1, 3.6))  # Space after headers
+        elif line.startswith('-'):
+            # Handle bullet points
+            items = line.split('- ')[1:]
+            list_items = []
+            for item in items:
+                list_items.append(ListItem(Paragraph(item, styles['Justify']), leftIndent=20))
+            elements.append(ListFlowable(list_items, bulletType='bullet'))
+        elif line.startswith('**') and line.endswith('**'):
+            # Handle bold lines
+            elements.append(Paragraph(line.strip('*'), styles['Bold']))
+            # Add specific check for the section needing more space
+            if line.strip('*') == "Unique Selling Points and Positioning:":
+                elements.append(Spacer(1, 14.4))  # Increase space after specific bold lines by 100%
+            else:
+                elements.append(Spacer(1, 3.6))  # Default space after bold lines
+        else:
+            # Handle normal paragraphs
+            elements.append(Paragraph(line, styles['Justify']))
+            elements.append(Spacer(1, 1.8))  # Reduce spacing by 50% below headers and content
+
+    doc.build(elements)
+
+    buffer.seek(0)
+    with open(filename, 'wb') as f:
+        f.write(buffer.getvalue())
+    buffer.seek(0)
+    return buffer
 
 @traceable
 def generate_pdf(icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output):
@@ -306,7 +364,7 @@ def send_email_with_pdf(pdf_filename):
         return False
 
 @traceable
-async def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits, retries=3):
+def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits, retries=3):
     task_description = f"New task from {email} selling {product_service} at {price} {currency} with payment frequency {payment_frequency}."
     if selling_scope == "Locally":
         task_description += f" Location: {location}."
@@ -364,19 +422,19 @@ def generate_report():
     features = data.get("features")
     benefits = data.get("benefits")
 
-    async def process_request():
-        credits, record_id = await check_credits(email)
+    try:
+        credits, record_id = check_credits(email)
         if credits > 0:
-            icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output = await start_crew_process(
+            icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output = start_crew_process(
                 email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits)
             
-            await send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output)
-            retrieved_outputs = await retrieve_from_airtable(email)
+            send_to_airtable(email, icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output)
+            retrieved_outputs = retrieve_from_airtable(email)
             pdf_filename = generate_pdf(*retrieved_outputs)
             if pdf_filename:
                 if send_email_with_pdf(pdf_filename):
                     new_credits = credits - 1
-                    await update_credits(record_id, new_credits)
+                    update_credits(record_id, new_credits)
                     return jsonify({"status": "success", "message": "Report generated and email sent successfully"}), 200
                 else:
                     return jsonify({"status": "error", "message": "Failed to send email"}), 500
@@ -384,9 +442,10 @@ def generate_report():
                 return jsonify({"status": "error", "message": "PDF generation failed or exceeds size limit"}), 500
         else:
             return jsonify({"status": "error", "message": "No credits available"}), 400
-    
-    result = asyncio.run(process_request())
-    return result
+    except Exception as e:
+        logging.error(f"An error occurred: {str(e)}")
+        logging.debug(traceback.format_exc())
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

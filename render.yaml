@@ -8,7 +8,7 @@ services:
       - key: FLASK_ENV
         value: production
     plan: starter
-    region: oregon
+    region: frankfurt
     healthCheckPath: /
     autoDeploy: true
 
@@ -18,5 +18,5 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.enableCORS false
     plan: free
-    region: oregon
+    region: frankfurt
     autoDeploy: true

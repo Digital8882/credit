@@ -5,7 +5,7 @@ import os
 # Set the backend URL directly
 backend_url = "https://credit-t9kr.onrender.com"
 
-st.title("Swift Launch Report Generator")
+st.title("ICP and Channels Report Generator")
 
 with st.form("input_form"):
     email = st.text_input("Email")
@@ -38,9 +38,24 @@ if submit_button:
         "benefits": benefits
     }
 
-    response = requests.post(f'{backend_url}/generate_report', json=payload)
+    try:
+        response = requests.post(f'{backend_url}/generate_report', json=payload)
+        response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
+        
+        try:
+            response_data = response.json()
+        except ValueError:
+            st.error("Failed to parse response as JSON")
+            st.write("Response text:", response.text)
+            response_data = None
+        
+        if response_data:
+            st.write(f"Response status code: {response.status_code}")
+            st.write(f"Response content: {response_data}")
 
-    if response.status_code == 200:
-        st.success("Report generated and email sent successfully!")
-    else:
-        st.error(f"Failed to generate report: {response.json().get('message')}")
+            if response.status_code == 200:
+                st.success("Report generated and email sent successfully!")
+            else:
+                st.error(f"Failed to generate report: {response_data.get('message')}")
+    except requests.exceptions.RequestException as e:
+        st.error(f"Request failed: {e}")

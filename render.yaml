@@ -19,4 +19,4 @@ services:
     startCommand: "streamlit run streamlit_app.py --server.port $PORT"
     envVars:
       - key: BACKEND_URL
-        value: https://stripe-1-esqs.onrender.com
+        value: https://credit-t9kr.onrender.com

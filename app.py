@@ -11,6 +11,7 @@ import time
 import traceback
 import builtins
 import re
+import asyncio
 import httpx
 import markdown
 from reportlab.lib.pagesizes import letter

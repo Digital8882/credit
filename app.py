@@ -372,7 +372,8 @@ def send_email_with_pdf(pdf_filename):
         logging.debug(traceback.format_exc())
         return False
 
-@traceable
+
+@profile
 def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits, retries=3):
     task_description = f"New task from {email} selling {product_service} at {price} {currency} with payment frequency {payment_frequency}."
     if selling_scope == "Locally":
@@ -396,6 +397,7 @@ def start_crew_process(email, product_service, price, currency, payment_frequenc
         try:
             logging.info(f"Starting crew process, attempt {attempt + 1}")
             results = project_crew.kickoff()
+
             icp_output = icp_task.output.exported_output if hasattr(icp_task.output, 'exported_output') else "No ICP output"
             channels_output = channels_task.output.exported_output if hasattr(channels_task.output, 'exported_output') else "No Channels output"
             pains_output = pains_task.output.exported_output if hasattr(pains_task.output, 'exported_output') else "No Pains output"
@@ -403,6 +405,7 @@ def start_crew_process(email, product_service, price, currency, payment_frequenc
             jtbd_output = jtbd_task.output.exported_output if hasattr(jtbd_task.output, 'exported_output') else "No JTBD output"
             propdesign_output = propdesign_task.output.exported_output if hasattr(propdesign_task.output, 'exported_output') else "No Product Design output"
             customerj_output = customerj_task.output.exported_output if hasattr(customerj_task.output, 'exported_output') else "No Customer Journey output"
+            
             logging.info("Crew process completed successfully")
             return icp_output, channels_output, pains_output, gains_output, jtbd_output, propdesign_output, customerj_output
         except BrokenPipeError as e:

@@ -1,10 +1,9 @@
 import streamlit as st
 import requests
-import asyncio
 
 API_URL = "https://credit-t9kr.onrender.com"
 
-st.title("Swift Launch Generator")
+st.title("ICP Report Generator")
 
 with st.form("input_form"):
     email = st.text_input("Email")

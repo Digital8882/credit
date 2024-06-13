@@ -373,7 +373,6 @@ def send_email_with_pdf(pdf_filename):
         return False
 
 
-@profile
 def start_crew_process(email, product_service, price, currency, payment_frequency, selling_scope, location, marketing_channels, features, benefits, retries=3):
     task_description = f"New task from {email} selling {product_service} at {price} {currency} with payment frequency {payment_frequency}."
     if selling_scope == "Locally":
